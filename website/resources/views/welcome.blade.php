@@ -361,10 +361,10 @@
   <div class="relative z-10 container-wide pt-24 pb-12 md:pt-32 md:pb-24 grid lg:grid-cols-2 gap-10 lg:gap-16 xl:gap-24 items-center w-full">
     <div>
       <!-- Badge -->
-      <div class="inline-flex items-center gap-2.5 bg-g-lime/10 border border-g-lime/25 rounded-full px-4 py-2 text-g-lime text-xs font-mono mb-8 md:mb-10">
+      {{-- <div class="inline-flex items-center gap-2.5 bg-g-lime/10 border border-g-lime/25 rounded-full px-4 py-2 text-g-lime text-xs font-mono mb-8 md:mb-10">
         <span class="w-2 h-2 rounded-full bg-g-lime blink"></span>
         IoT + AI Hydroponic System · v1.0
-      </div>
+      </div> --}}
 
       <h1 class="text-4xl md:text-6xl xl:text-7xl font-bold text-white leading-[1.05] mb-6 md:mb-7">
         Tanam Lebih Cerdas<br/>
@@ -823,8 +823,8 @@
     <div class="reveal max-w-3xl mx-auto">
       <div class="grad-border rounded-3xl p-6 md:p-12 xl:p-16 flex flex-col md:flex-row gap-8 md:gap-10 xl:gap-14 items-center">
         <div class="relative shrink-0">
-          <div class="w-32 h-32 md:w-36 md:h-36 xl:w-40 xl:h-40 rounded-3xl bg-gradient-to-br from-g-lime/30 to-g-teal/20 border-2 border-g-lime/40 flex items-center justify-center text-5xl font-bold text-g-lime">
-            J
+          <div class="w-32 h-32 md:w-36 md:h-36 overflow-hidden xl:w-40 xl:h-40 rounded-3xl bg-gradient-to-br from-g-lime/30 to-g-teal/20 border-2 border-g-lime/40 flex items-center justify-center text-5xl font-bold text-g-lime">
+            <img src="{{ asset('img/justin.png') }}" alt="">
           </div>
           <div class="absolute -bottom-2 -right-2 bg-g-lime text-g-black text-[10px] font-bold px-2.5 py-1 rounded-full font-mono">IoT Dev</div>
         </div>
@@ -841,7 +841,7 @@
             <span class="bg-g-lime/10 border border-g-lime/20 text-g-lime text-xs px-3 py-1 rounded-full font-mono">C/C++</span>
             <span class="bg-g-lime/10 border border-g-lime/20 text-g-lime text-xs px-3 py-1 rounded-full font-mono">IoT</span>
             <span class="bg-g-lime/10 border border-g-lime/20 text-g-lime text-xs px-3 py-1 rounded-full font-mono">API Integration</span>
-            <span class="bg-g-lime/10 border border-g-lime/20 text-g-lime text-xs px-3 py-1 rounded-full font-mono">AI (Gemini)</span>
+            <span class="bg-g-lime/10 border border-g-lime/20 text-g-lime text-xs px-3 py-1 rounded-full font-mono">Electrical</span>
           </div>
         </div>
       </div>
@@ -894,7 +894,7 @@
           </div>
           <div>
             <p class="text-sm font-semibold text-white mb-1">Lokasi</p>
-            <p class="text-g-muted text-sm">SMKN 4 Bogor, Jawa Barat, Indonesia</p>
+            <p class="text-g-muted text-sm">JL Raya Cipaku RT 005/003</p>
           </div>
         </div>
         <div class="flex items-start gap-4 md:gap-5">
@@ -903,7 +903,7 @@
           </div>
           <div>
             <p class="text-sm font-semibold text-white mb-1">Email</p>
-            <p class="text-g-muted text-sm">hello@gdronic.id</p>
+            <p class="text-g-muted text-sm">justinebogor0609@gmail.com</p>
           </div>
         </div>
         <div class="flex items-start gap-4 md:gap-5">
@@ -967,7 +967,7 @@
     </div>
 
     <div class="border-t border-g-lime/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-      <p class="text-g-muted text-xs font-mono">© 2024 Gdronic. Built with <i class="fa-solid fa-heart text-g-lime mx-0.5"></i> by Justine · SMKN 4 Bogor</p>
+      <p class="text-g-muted text-xs font-mono">© 2026 Gdronic. Built by Justine · Zerrace</p>
       <p class="text-g-muted text-xs font-mono">Smart Hydroponic System · IoT + AI</p>
     </div>
   </div>
