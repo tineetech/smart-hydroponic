@@ -1,9 +1,6 @@
 @extends('layouts.admin')
 
-@section('styles')
 
-    
-@endsection
 @section('content')
     <!-- HEADER -->
     <header id="header">
