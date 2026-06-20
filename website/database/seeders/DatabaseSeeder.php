@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
         // ]);
         $this->call([
             AllSeeder::class,
+            KomponentSeeder::class,
+            // SensorLogSeeder::class,
             PengaturanSeeder::class,
         ]);
     }

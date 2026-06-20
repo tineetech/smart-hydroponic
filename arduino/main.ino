@@ -1,5 +1,8 @@
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <NewPing.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
 #include <DHT.h>
@@ -7,10 +10,26 @@
 #include <DallasTemperature.h>
 #include <LiquidCrystal_I2C.h>
 
+const char* ssid = "z";
+const char* password = "00000000";
+String url = "http://10.154.81.156:8000/api/batch-log/store";
+unsigned long lastSend = 0;
+const long intervalSend = 3000;
 // =======================
 // LCD I2C 20x4
 // =======================
 LiquidCrystal_I2C lcd(0x27, 20, 4); // alamat umum 0x27
+unsigned long lastTextChange = 0;
+const long intervalText = 3000;
+unsigned long lastLCD = 0;
+const long intervalLCD = 500;
+byte textIndex = 0;
+
+String statusText[] = {
+  "System OK",
+  "Gdronic",
+  "Smart Hydroponic"
+};
 
 // =======================
 // ADS1115
@@ -22,6 +41,10 @@ Adafruit_ADS1115 ads;
 // =======================
 #define TRIG_PIN 5
 #define ECHO_PIN 18
+#define MAX_DISTANCE 400 // cm
+#define TINGGI_TANGKI 35.0
+
+NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
 
 // =======================
 // DHT22
@@ -36,6 +59,18 @@ DHT dht(DHT_PIN, DHT_TYPE);
 #define ONE_WIRE_BUS 4
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
+
+// =======================
+// RELAY SSR DAN MOTOR
+// =======================
+#define SSR_PIN 23
+#define MOTOR1_PIN 25
+#define MOTOR2_PIN 26
+
+unsigned long lastAktuator = 0;
+const long intervalAktuator = 2000;
+bool statusOutput = false;
+String urlAktuator = "http://10.154.81.156:8000/api/aktuator/status";
 
 // =======================
 // TIMER
@@ -53,6 +88,7 @@ float suhuUdara = 0;
 float kelembaban = 0;
 float suhuAir = 0;
 float phVoltage = 0;
+float phValue = 0;
 float tdsVoltage = 0;
 
 int16_t phRaw = 0;
@@ -62,31 +98,213 @@ int16_t tdsRaw = 0;
 // WIFI INIT
 // =======================
 void connectWiFi() {
-
-  WiFiManager wm;
-
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Setup WiFi...");
+  lcd.print("Connecting...");
 
-  bool res = wm.autoConnect("Hydroponic-ESP32");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
 
-  if (!res) {
+  Serial.print("Connecting to WiFi");
+
+  int retry = 0;
+  while (WiFi.status() != WL_CONNECTED && retry < 30) {
+    delay(500);
+    Serial.print(".");
+    lcd.setCursor(retry % 20, 1);
+    lcd.print(".");
+    retry++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi Connected!");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("WiFi Connected");
+    lcd.setCursor(0, 1);
+    lcd.print(WiFi.localIP());
+
+    delay(3000);
+  } else {
+    Serial.println("\nFailed to connect!");
+
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("WiFi Failed");
+
     delay(3000);
     ESP.restart();
   }
+}
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("WiFi Connected");
+void bacaAktuator() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected");
+    return;
+  }
 
-  lcd.setCursor(0, 1);
-  lcd.print(WiFi.localIP());
+  HTTPClient http;
+  http.begin(urlAktuator);
 
-  delay(3000);
+  int httpCode = http.GET();
+
+  if (httpCode > 0) {
+    String response = http.getString();
+
+    Serial.println("===== AKTUATOR =====");
+    Serial.println(response);
+
+    JsonDocument doc;
+    DeserializationError error =
+      deserializeJson(doc, response);
+
+    if (!error) {
+      String ssr =
+        doc["aktuator"]["data"]["SSR Pompa Utama"] | "off";
+
+      String phDown =
+        doc["aktuator"]["data"]["Motor pH Down"] | "off";
+
+      String phUp =
+        doc["aktuator"]["data"]["Motor pH Up"] | "off";
+
+      // SSR Pompa Utama
+      digitalWrite(
+        SSR_PIN,
+        ssr.equalsIgnoreCase("on") ? LOW : HIGH
+      );
+
+      // Motor pH Down
+      digitalWrite(
+        MOTOR1_PIN,
+        phDown.equalsIgnoreCase("on") ? HIGH : LOW
+      );
+
+      // Motor pH Up
+      digitalWrite(
+        MOTOR2_PIN,
+        phUp.equalsIgnoreCase("on") ? HIGH : LOW
+      );
+
+      Serial.print("SSR       : ");
+      Serial.println(ssr);
+
+      Serial.print("pH Down   : ");
+      Serial.println(phDown);
+
+      Serial.print("pH Up     : ");
+      Serial.println(phUp);
+    } else {
+      Serial.print("JSON Error: ");
+      Serial.println(error.c_str());
+    }
+  } else {
+    Serial.print("HTTP Error: ");
+    Serial.println(http.errorToString(httpCode));
+  }
+
+  http.end();
+}
+
+void kirimDataAPI(float suhuAir,
+                  float suhuUdara,
+                  float kelembaban,
+                  float jarak,
+                  float levelAir,
+                  float ph,
+                  float tds) {
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected");
+    return;
+  }
+
+  HTTPClient http;
+
+  http.begin(url);
+
+  http.addHeader("Content-Type", "application/json");
+
+  JsonDocument doc;
+
+  // ======================
+  // SENSOR
+  // ======================
+  JsonObject sensor = doc["sensor"].to<JsonObject>();
+  JsonObject sensorData = sensor["data"].to<JsonObject>();
+
+  // DS18B20
+  JsonObject ds = sensorData["DS18B20 Suhu Air"].to<JsonObject>();
+  ds["nilai"] = suhuAir;
+  ds["kualitas_data"] = "normal";
+  ds["sudah_diproses"] = true;
+
+  // DHT22
+  JsonObject dht = sensorData["DHT22 Suhu Udara"].to<JsonObject>();
+
+  JsonObject dhtNilai = dht["nilai"].to<JsonObject>();
+  dhtNilai["suhu"] = suhuUdara;
+  dhtNilai["kelembapan"] = kelembaban;
+
+  dht["kualitas_data"] = "normal";
+  dht["sudah_diproses"] = true;
+
+  // HC-SR04
+  JsonObject hc = sensorData["HC-SR04 Level Air"].to<JsonObject>();
+
+  JsonObject hcNilai = hc["nilai"].to<JsonObject>();
+  // hcNilai["level"] = 32;
+  hcNilai["level"] = levelAir;
+  hcNilai["jarak_cm"] = jarak;
+
+  hc["kualitas_data"] = "normal";
+  hc["sudah_diproses"] = true;
+
+  // pH
+  JsonObject phObj = sensorData["Probe pH Larutan"].to<JsonObject>();
+  int phKirim = (int)(ph);
+  // phObj["nilai"] = ph;
+  phObj["nilai"] = phKirim;
+  phObj["kualitas_data"] = "normal";
+  phObj["sudah_diproses"] = true;
+
+  // TDS
+  JsonObject tdsObj = sensorData["EC/TDS Probe"].to<JsonObject>();
+
+  JsonObject tdsNilai = tdsObj["nilai"].to<JsonObject>();
+  int tdsKirim = (int)(tds * 1000);
+  // tdsNilai["tds"] = tds;
+  tdsNilai["tds"] = tdsKirim;
+  tdsNilai["ec"] = 5.36;
+
+  tdsObj["kualitas_data"] = "normal";
+  tdsObj["sudah_diproses"] = true;
+
+
+  String body;
+  serializeJson(doc, body);
+
+  // Serial.println("===== JSON =====");
+  // Serial.println(body);
+
+  int httpCode = http.POST(body);
+
+  // Serial.print("HTTP Code : ");
+  // Serial.println(httpCode);
+
+  if (httpCode > 0) {
+    String response = http.getString();
+
+    Serial.println("Response:");
+    Serial.println(response);
+  } else {
+    Serial.println(http.errorToString(httpCode));
+  }
+
+  http.end();
 }
 
 // =======================
@@ -100,6 +318,15 @@ void setup() {
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("System Starting...");
+  
+  pinMode(SSR_PIN, OUTPUT);
+  pinMode(MOTOR1_PIN, OUTPUT);
+  pinMode(MOTOR2_PIN, OUTPUT);
+
+  // Kondisi awal mati
+  digitalWrite(SSR_PIN, LOW);
+  digitalWrite(MOTOR1_PIN, LOW);
+  digitalWrite(MOTOR2_PIN, LOW);
 
   connectWiFi();
 
@@ -132,18 +359,13 @@ void setup() {
 // FUNGSI ULTRASONIK
 // =======================
 float bacaJarak() {
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
+  unsigned int jarak = sonar.ping_median(5);
 
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
+  if (jarak == 0) {
+    return -1;
+  }
 
-  digitalWrite(TRIG_PIN, LOW);
-
-  long durasi = pulseIn(ECHO_PIN, HIGH, 30000);
-  if (durasi == 0) return -1;
-
-  return durasi / 58.3;
+  return jarak / US_ROUNDTRIP_CM;
 }
 
 // =======================
@@ -153,19 +375,30 @@ void loop() {
 
   // =======================
   // ADS1115
-  // A0 = TDS
-  // A1 = PH
+  // A0 = PH
+  // A1 = TDS
   // =======================
-  tdsRaw = ads.readADC_SingleEnded(0);
+  tdsRaw = ads.readADC_SingleEnded(1);
   tdsVoltage = ads.computeVolts(tdsRaw);
 
-  phRaw = ads.readADC_SingleEnded(1);
+  phRaw = ads.readADC_SingleEnded(0);
   phVoltage = ads.computeVolts(phRaw);
+  // Serial.print("PH VOLT : ");
+  // Serial.println(phVoltage);
+  // phValue = 7 + ((2.5 - phVoltage) / 0.18);
+  phValue = 3.5 * phVoltage;
+  if (phValue < 0) phValue = 0;
+  // if (phValue > 14) phValue = 14;
 
   // =======================
   // ULTRASONIK
   // =======================
   float jarak = bacaJarak();
+  if (jarak < 0) jarak = 0;
+  float levelAir = TINGGI_TANGKI - jarak;
+
+  if (levelAir < 0)
+    levelAir = 0;
 
   // =======================
   // DHT22
@@ -191,9 +424,38 @@ void loop() {
     sensors.requestTemperatures();
     float temp = sensors.getTempCByIndex(0);
 
-    // if (temp != -127.0) {
-      suhuAir = temp;
-    // }
+    if (temp != -127.0) {
+      // suhuAir = temp;
+      suhuAir = round(temp * 10.0) / 10.0;
+    }
+  }
+
+  if (millis() - lastSend >= intervalSend) {
+    lastSend = millis();
+
+    kirimDataAPI(
+      suhuAir,
+      suhuUdara,
+      kelembaban,
+      jarak,
+      levelAir,
+      phValue,
+      tdsVoltage
+    );
+
+    // kirimDataAPI(
+    //   27.8, // suhuAir
+    //   30.2, // suhuUdara
+    //   65,   // kelembaban
+    //   5.7,  // jarak
+    //   4.4,  // ph
+    //   4480  // tds
+    // );
+  }
+  
+  if (millis() - lastAktuator >= intervalAktuator) {
+    lastAktuator = millis();
+    bacaAktuator();
   }
 
   // =======================
@@ -233,59 +495,59 @@ void loop() {
 
   Serial.println("=======================\n");
 
-  // =======================
-  // LCD 20x4
-  // =======================
-  lcd.clear();
+  if (millis() - lastLCD >= intervalLCD) {
+    lastLCD = millis();
+    // =======================
+    // LCD 20x4
+    // =======================
+    lcd.clear();
 
-  // -----------------------
-  // BARIS 1
-  // pH & TDS
-  // -----------------------
-  String line1Left = "pH:" + String(phVoltage, 2);
-  String line1Right = "TDS:" + String(tdsVoltage, 2);
+    // Baris 1
+    lcd.setCursor(0, 0);
+    lcd.print("pH : ");
+    lcd.print(phValue, 1);
 
-  lcd.setCursor(0, 0);
-  lcd.print(line1Left);
+    lcd.setCursor(11, 0);
+    lcd.print("TDS: ");
+    lcd.print(tdsVoltage, 2);
 
-  lcd.setCursor(20 - line1Right.length(), 0);
-  lcd.print(line1Right);
+    // Baris 2
+    lcd.setCursor(0, 1);
+    lcd.print("TA : ");
+    lcd.print(suhuUdara, 1);
+    lcd.print(" C");
 
-  // -----------------------
-  // BARIS 2
-  // Suhu Udara & Humidity
-  // -----------------------
-  String line2Left = "T:" + String(suhuUdara, 1) + "C";
-  String line2Right = "H:" + String(kelembaban, 0) + "%";
+    lcd.setCursor(11, 1);
+    lcd.print("RH : ");
+    lcd.print((int)kelembaban);
+    lcd.print("%");
 
-  lcd.setCursor(0, 1);
-  lcd.print(line2Left);
+    // Baris 3
+    lcd.setCursor(0, 2);
+    lcd.print("TW : ");
+    lcd.print(suhuAir, 1);
+    lcd.print(" C");
 
-  lcd.setCursor(20 - line2Right.length(), 1);
-  lcd.print(line2Right);
+    lcd.setCursor(11, 2);
+    lcd.print("LV : ");
+    lcd.print(jarak, 0);
+    lcd.print("cm");
 
-  // -----------------------
-  // BARIS 3
-  // Suhu Air & Jarak
-  // -----------------------
-  String line3Left = "Air:" + String(suhuAir, 1) + "C";
-  String line3Right = "J:" + String(jarak, 0) + "cm";
+    // Ganti tulisan bawah setiap 3 detik
+    if (millis() - lastTextChange >= intervalText) {
+      lastTextChange = millis();
+      textIndex++;
 
-  lcd.setCursor(0, 2);
-  lcd.print(line3Left);
+      if (textIndex >= 3) {
+        textIndex = 0;
+      }
+    }
 
-  lcd.setCursor(20 - line3Right.length(), 2);
-  lcd.print(line3Right);
+    // Baris 4 (center)
+    String line4 = statusText[textIndex];
+    int centerPos = (20 - line4.length()) / 2;
 
-  // -----------------------
-  // BARIS 4 CENTER
-  // -----------------------
-  String line4 = "System OK";
-
-  int centerPos = (20 - line4.length()) / 2;
-
-  lcd.setCursor(centerPos, 3);
-  lcd.print(line4);
-
-  delay(1000);
+    lcd.setCursor(centerPos, 3);
+    lcd.print(line4);
+  }
 }

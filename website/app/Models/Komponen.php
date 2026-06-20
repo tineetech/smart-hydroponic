@@ -23,10 +23,6 @@ class Komponen extends Model
         'status',
     ];
 
-    protected $casts = [
-        'pin_data'    => 'array',   // otomatis encode/decode JSON
-        'batas_nilai' => 'array',
-    ];
 
     // ── Konstanta Enum ────────────────────────────────────────────────
     const JENIS_SENSOR   = 'sensor';
