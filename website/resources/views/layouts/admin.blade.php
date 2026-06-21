@@ -734,7 +734,8 @@
         .fallback-note { font-size: 11px; color: #5a7a60; margin-top: 6px; font-style: italic; }
         @media (max-width: 640px) {
             #chat-popup {
-                right: 12px; bottom: 88px; width: calc(100vw - 24px); height: calc(100vh - 110px);
+                right: 12px; bottom: 88px; width: calc(100vw - 24px);
+                height: calc(100vh - 110px); height: calc(100dvh - 110px);
                 border-radius: 16px; max-height: none;
             }
             #chat-fab { bottom: 20px; right: 20px; width: 52px; height: 52px; }
