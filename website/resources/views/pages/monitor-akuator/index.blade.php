@@ -16,10 +16,10 @@
         <div style="flex:1;min-width:0;">
             <div id="page-title"
                 style="font-size:15px;font-weight:700;color:#E8F0E8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                Dashboard</div>
+                Monitoring Aktuator</div>
             <div id="page-breadcrumb"
                 style="font-size:11px;color:#4D5E4D;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                Ringkasan sistem hidroponik Anda</div>
+                Status dan kontrol semua aktuator</div>
         </div>
 
         <!-- Header Right -->
@@ -32,23 +32,15 @@
                     <path d="M12 6v6l4 2" stroke="#5A7A5A" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
                 <span style="font-size:11px;color:#5A7A5A;">Update: <span id="last-update"
-                        style="color:#A8F04A;">--:--:--</span></span>
+                        style="color:#16C47F;">--:--:--</span></span>
             </div>
 
-            <!-- Notif -->
-            <button
-                style="background:#131613;border:1px solid #1E2C1E;border-radius:10px;padding:8px;cursor:pointer;position:relative;color:#7A9A7A;flex-shrink:0;">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor"
-                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="notif-dot"></div>
-            </button>
+            @include('components.admin.notif-dropdown')
 
             <!-- Profile -->
-            <div
-                style="width:36px;height:36px;background:linear-gradient(135deg,#A8F04A,#6BC42A);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;">
-                G</div>
+            <a href="{{ route('profile.edit') }}"
+                style="width:36px;height:36px;background:linear-gradient(135deg,#16C47F,#12A86B);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;text-decoration:none;">
+                {{ auth()->user() ? substr(auth()->user()->name, 0, 1) : 'G' }}</a>
         </div>
     </header>
 
@@ -77,7 +69,7 @@
                     <div class="stat-card" style="padding:16px;">
                         <div style="font-size:10px;color:#4D5E4D;font-weight:600;letter-spacing:0.05em;margin-bottom:8px;">
                             SEDANG AKTIF</div>
-                        <div style="font-size:28px;font-weight:800;color:#A8F04A;" id="astat-aktif">
+                        <div style="font-size:28px;font-weight:800;color:#16C47F;" id="astat-aktif">
                             {{ $stats['aktif'] }}</div>
                         <div style="font-size:11px;color:#5A7A5A;margin-top:4px;">Status ON saat ini</div>
                     </div>
@@ -134,9 +126,9 @@
 
                             $warna = match (true) {
                                 str_contains($tipe, 'pompa'), str_contains($tipe, 'ssr') => [
-                                    'hex' => '#A8F04A',
-                                    'bg' => '#A8F04A18',
-                                    'border' => '#A8F04A22',
+                                    'hex' => '#16C47F',
+                                    'bg' => '#16C47F18',
+                                    'border' => '#16C47F22',
                                 ],
                                 str_contains($tipe, 'ph down') => [
                                     'hex' => '#F04A4A',
@@ -292,7 +284,7 @@
                         @php
                             $tipe = strtolower($aktuator->tipe_komponen ?? '');
                             $warna = match (true) {
-                                str_contains($tipe, 'pompa'), str_contains($tipe, 'ssr') => '#A8F04A',
+                                str_contains($tipe, 'pompa'), str_contains($tipe, 'ssr') => '#16C47F',
                                 str_contains($tipe, 'ph down') => '#F04A4A',
                                 str_contains($tipe, 'ph up') => '#4A8AF0',
                                 str_contains($tipe, 'motor') => '#F0A84A',
@@ -410,9 +402,9 @@
                                         $tipe = strtolower($log->komponen->tipe_komponen ?? '');
                                         $warna = match (true) {
                                             str_contains($tipe, 'pompa'), str_contains($tipe, 'ssr') => [
-                                                'hex' => '#A8F04A',
-                                                'bg' => '#A8F04A18',
-                                                'border' => '#A8F04A22',
+                                                'hex' => '#16C47F',
+                                                'bg' => '#16C47F18',
+                                                'border' => '#16C47F22',
                                                 'abbr' => 'PM',
                                             ],
                                             str_contains($tipe, 'ph down') => [
@@ -541,7 +533,7 @@
                             @foreach ($logs->getUrlRange(1, $logs->lastPage()) as $page => $url)
                                 @if ($page == $logs->currentPage())
                                     <span
-                                        style="font-size:11px;background:#A8F04A18;border:1px solid #A8F04A33;color:#A8F04A;border-radius:6px;padding:4px 10px;font-weight:600;">{{ $page }}</span>
+                                        style="font-size:11px;background:#16C47F18;border:1px solid #16C47F33;color:#16C47F;border-radius:6px;padding:4px 10px;font-weight:600;">{{ $page }}</span>
                                 @elseif(abs($page - $logs->currentPage()) <= 2)
                                     <a href="{{ $url }}"
                                         style="font-size:11px;background:#131613;border:1px solid #1E2C1E;color:#5A7A5A;border-radius:6px;padding:4px 10px;text-decoration:none;">{{ $page }}</a>
@@ -580,7 +572,7 @@
                         <button onclick="closeCatatanModal()"
                             style="flex:1;background:#131613;border:1px solid #1E2C1E;color:#7A9A7A;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Batal</button>
                         <button onclick="saveCatatanModal()"
-                            style="flex:1;background:#A8F04A;border:none;color:#0D1A0D;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Simpan</button>
+                            style="flex:1;background:#16C47F;border:none;color:#0D1A0D;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Simpan</button>
                     </div>
                 </div>
             </div>
@@ -695,7 +687,7 @@
                     backgroundColor: '#1A2A1A',
                     borderColor: '#2A3A2A',
                     borderWidth: 1,
-                    titleColor: '#A8F04A',
+                    titleColor: '#16C47F',
                     bodyColor: '#C4D4C4',
                     padding: 10,
                     cornerRadius: 8,
@@ -857,6 +849,8 @@
             }
         }
 
+        const prevAktuatorData = {};
+
         function applyAktuatorState(id, state, opts = {}) {
             const card = document.getElementById('actuator-card-' + id);
             const color = aWarnaMap[id] || '#A84AF0';
@@ -918,6 +912,11 @@
             }
 
             if (opts.skipChart) return;
+
+            const hash = state.is_on + '|' + (state.nilai_pwm ?? '');
+            const isNew = prevAktuatorData[id] !== hash;
+            prevAktuatorData[id] = hash;
+            if (!isNew) return;
 
             if (aMiniCharts[id]) {
                 const mc = aMiniCharts[id];

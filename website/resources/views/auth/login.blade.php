@@ -26,7 +26,7 @@
         }
 
         .input-dark:focus {
-            border-color: #A8F04A !important;
+            border-color: #16C47F !important;
             box-shadow: 0 0 0 3px rgba(168, 240, 74, 0.12) !important;
             outline: none !important;
         }
@@ -36,8 +36,8 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #7ab82e, #5f9023);
-            border: 1px solid #A8F04A;
+            background: linear-gradient(135deg, #12A86B, #0E7A4F);
+            border: 1px solid #16C47F;
             color: #0f1a0f;
             font-weight: 700;
             letter-spacing: 0.025em;
@@ -56,12 +56,12 @@
         }
 
         .logo-ring {
-            background: linear-gradient(135deg, #7ab82e, #5f9023);
+            background: linear-gradient(135deg, #12A86B, #0E7A4F);
             box-shadow: 0 0 20px rgba(168, 240, 74, 0.35);
         }
 
         .status-dot {
-            background: #A8F04A !important;
+            background: #16C47F !important;
             animation: pulse-lime 2s infinite;
         }
 
@@ -71,7 +71,7 @@
         }
 
         .checkbox-custom {
-            accent-color: #A8F04A;
+            accent-color: #16C47F;
         }
 
         .divider {
@@ -79,12 +79,12 @@
         }
 
         .accent-text {
-            color: #A8F04A;
+            color: #16C47F;
         }
 
         .online-badge {
             background: rgba(168, 240, 74, 0.15);
-            color: #A8F04A;
+            color: #16C47F;
             border: 1px solid rgba(168, 240, 74, 0.3);
         }
 
@@ -136,7 +136,7 @@
             background: rgba(168, 240, 74, 0.15);
             border: 1px solid rgba(168, 240, 74, 0.4);
             backdrop-filter: blur(8px);
-            color: #A8F04A;
+            color: #16C47F;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 2px;
@@ -175,7 +175,7 @@
         /* Toggle password hover */
         .eye-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
         .eye-btn svg { stroke: #4a6b4a; transition: stroke 0.2s; }
-        .eye-btn:hover svg { stroke: #A8F04A; }
+        .eye-btn:hover svg { stroke: #16C47F; }
     </style>
 </head>
 <body>
@@ -211,14 +211,14 @@
                         <div class="relative w-9 h-9">
           <div class="absolute inset-0 rounded-lg bg-g-lime/20 border border-g-lime/40"></div>
           <svg class="absolute inset-0 m-auto w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#a8f04a"/>
-            <circle cx="12" cy="14" r="2.5" fill="#a8f04a"/>
+            <path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#16C47F"/>
+            <circle cx="12" cy="14" r="2.5" fill="#16C47F"/>
           </svg>
         </div>
                     </div>
                     <div>
                         <p class="text-white font-bold text-lg leading-none">Gdronic.</p>
-                        <p class="text-xs mt-0.5" style="color: rgba(168,240,74,0.7);">Smart Hydroponic System</p>
+                        <p class="text-xs mt-0.5" style="color: rgba(22,196,127,0.7);">Smart Hydroponic System</p>
                     </div>
                 </div>
 
@@ -253,7 +253,7 @@
                 </div>
                 <div>
                     <p class="text-white font-bold text-lg leading-none">Gdronic.</p>
-                    <p class="text-xs" style="color: #A8F04A;">Smart Hydroponic System</p>
+                    <p class="text-xs" style="color: #16C47F;">Smart Hydroponic System</p>
                 </div>
             </div>
 
@@ -381,9 +381,9 @@
                     @if (Route::has('password.request'))
                         <a href="{{ route('password.request') }}"
                            class="text-sm font-semibold transition-colors duration-200"
-                           style="color: #A8F04A;"
+                           style="color: #16C47F;"
                            onmouseover="this.style.color='#C4F57A'"
-                           onmouseout="this.style.color='#A8F04A'">
+                           onmouseout="this.style.color='#16C47F'">
                             Lupa password?
                         </a>
                     @endif

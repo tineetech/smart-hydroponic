@@ -7,7 +7,7 @@
     <div style="padding: 20px 20px 16px; border-bottom: 1px solid #1A2A1A;">
         <div style="display:flex; align-items:center; gap:10px;">
             <div
-                style="width:36px;height:36px;background:linear-gradient(135deg,#A8F04A,#6BC42A);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                style="width:36px;height:36px;background:linear-gradient(135deg,#16C47F,#12A86B);border-radius:10px;display:flex;align-items:center;justify-content:center;">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
                     <path
                         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"
@@ -16,7 +16,7 @@
             </div>
             <div>
                 <div style="font-size:16px;font-weight:800;color:#E8F0E8;letter-spacing:-0.02em;">Gdronic<span
-                        style="color:#A8F04A;">.</span></div>
+                        style="color:#16C47F;">.</span></div>
                 <div style="font-size:10px;color:#4D5E4D;font-weight:500;letter-spacing:0.05em;">ADMIN PANEL</div>
             </div>
         </div>
@@ -92,6 +92,18 @@
             Kelola Sensor
         </a>
 
+        <div class="nav-section-label" style="margin-top:8px;">Lainnya</div>
+
+        <a class="nav-item {{ request()->routeIs('kelola-notifikasi.index') ? 'active' : '' }}"
+            href="{{ route('kelola-notifikasi.index') }}">
+            <div class="nav-icon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            Kelola Notifikasi
+        </a>
+
         <a class="nav-item {{ request()->routeIs('admin.pengaturan.index') ? 'active' : '' }}"
             href="{{ route('admin.pengaturan.index') }}">
             <div class="nav-icon">
@@ -103,6 +115,17 @@
                 </svg>
             </div>
             Pengaturan Sistem
+        </a>
+
+        <a class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}"
+            href="{{ route('profile.edit') }}">
+            <div class="nav-icon">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+            </div>
+            Profil Saya
         </a>
 
         <div class="nav-section-label" style="margin-top:8px;">Perangkat</div>
@@ -123,7 +146,7 @@
                         </div>
                         <span style="font-size:12px;color:#7A8E7A;">{{ $sensor->nama_komponen }}</span>
                         <div
-                            style="margin-left:auto;width:6px;height:6px;border-radius:50%;flex-shrink:0;{{ $sensor->is_aktif ? 'background:#A8F04A;' : 'background:#2A3A2A;border:1px solid #3A4A3A;' }}">
+                            style="margin-left:auto;width:6px;height:6px;border-radius:50%;flex-shrink:0;{{ $sensor->is_aktif ? 'background:#16C47F;' : 'background:#2A3A2A;border:1px solid #3A4A3A;' }}">
                         </div>
                     </div>
                 @empty
@@ -145,7 +168,7 @@
                         </div>
                         <span style="font-size:12px;color:#7A8E7A;">{{ $aktuator->nama_komponen }}</span>
                         <div
-                            style="margin-left:auto;width:6px;height:6px;border-radius:50%;flex-shrink:0;{{ $aktuator->status_aktuator === 'on' ? 'background:#A8F04A;' : 'background:#2A3A2A;border:1px solid #3A4A3A;' }}">
+                            style="margin-left:auto;width:6px;height:6px;border-radius:50%;flex-shrink:0;{{ $aktuator->status_aktuator === 'on' ? 'background:#16C47F;' : 'background:#2A3A2A;border:1px solid #3A4A3A;' }}">
                         </div>
                     </div>
                 @empty
@@ -159,7 +182,7 @@
     <div style="padding:16px;border-top:1px solid #1A2A1A;margin-top:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
             <div
-                style="width:34px;height:34px;background:linear-gradient(135deg,#A8F04A,#6BC42A);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;flex-shrink:0;">
+                style="width:34px;height:34px;background:linear-gradient(135deg,#16C47F,#12A86B);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;flex-shrink:0;">
                 G</div>
             <div style="flex:1;min-width:0;">
                 <div

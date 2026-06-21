@@ -15,9 +15,9 @@
             'g-black':    '#080f0a',
             'g-dark':     '#0d1a10',
             'g-mid':      '#132016',
-            'g-lime':     '#a8f04a',
-            'g-lime2':    '#c5ff6b',
-            'g-teal':     '#2ecc8a',
+            'g-lime':     '#16C47F',
+            'g-lime2':    '#1AE08F',
+            'g-teal':     '#12A86B',
             'g-text':     '#d4ecd9',
             'g-muted':    '#5a7a60',
           },
@@ -44,9 +44,9 @@
 
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #0d1a10; }
-    ::-webkit-scrollbar-thumb { background: #a8f04a; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb { background: #16C47F; border-radius: 99px; }
 
-    .glow { text-shadow: 0 0 40px rgba(168,240,74,0.5), 0 0 80px rgba(168,240,74,0.2); }
+    .glow { text-shadow: 0 0 40px rgba(22,196,127,0.5), 0 0 80px rgba(22,196,127,0.2); }
 
     @keyframes scan {
       0%   { transform: translateY(-100%); opacity: 0; }
@@ -56,7 +56,7 @@
     }
     .scan-line {
       position: absolute; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, #a8f04a, transparent);
+      background: linear-gradient(90deg, transparent, #16C47F, transparent);
       animation: scan 7s linear infinite;
       pointer-events: none;
     }
@@ -65,7 +65,7 @@
     .blink { animation: blink 2.2s ease-in-out infinite; }
 
     .feat-card { transition: transform .3s, box-shadow .3s; }
-    .feat-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(168,240,74,0.1); }
+    .feat-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(22,196,127,0.1); }
 
     @keyframes orbit {
       from { transform: rotate(0deg) translateX(90px) rotate(0deg); }
@@ -75,8 +75,8 @@
       animation: orbit 10s linear infinite;
       position: absolute;
       width: 8px; height: 8px;
-      background: #a8f04a; border-radius: 50%;
-      box-shadow: 0 0 12px rgba(168,240,74,0.8);
+      background: #16C47F; border-radius: 50%;
+      box-shadow: 0 0 12px rgba(22,196,127,0.8);
     }
 
     .navbar-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
@@ -89,10 +89,10 @@
 
     .grad-border {
       background: linear-gradient(135deg, #132016, #0d1a10);
-      border: 1px solid rgba(168,240,74,0.12);
+      border: 1px solid rgba(22,196,127,0.12);
       transition: border-color .3s;
     }
-    .grad-border:hover { border-color: rgba(168,240,74,0.35); }
+    .grad-border:hover { border-color: rgba(22,196,127,0.35); }
 
     .ph-bar { transition: width 1.4s cubic-bezier(.4,0,.2,1); }
 
@@ -210,7 +210,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(168,240,74,0.1), rgba(46,204,138,0.1));
+      background: linear-gradient(135deg, rgba(22,196,127,0.1), rgba(18,168,107,0.1));
       opacity: 0;
       transition: opacity 0.35s ease;
       border-radius: inherit;
@@ -222,7 +222,7 @@
 
     .feat-tab.active, .step-btn.active {
       transform: scale(1.05);
-      box-shadow: 0 4px 16px rgba(168,240,74,0.3);
+      box-shadow: 0 4px 16px rgba(22,196,127,0.3);
     }
 
     /* Content Reveal Elements */
@@ -299,16 +299,16 @@
 <body>
 
 <!-- ═══════════════════════ NAVBAR ═══════════════════════ -->
-<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-  <div class="navbar-blur bg-g-black/75 border-b border-g-lime/10">
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
+  <div id="nav-inner" class="transition-all duration-500 border-b border-transparent">
     <div class="container-wide py-4 flex items-center justify-between">
       <!-- Logo -->
       <div class="flex items-center gap-3">
         <div class="relative w-9 h-9">
           <div class="absolute inset-0 rounded-lg bg-g-lime/20 border border-g-lime/40"></div>
           <svg class="absolute inset-0 m-auto w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#a8f04a"/>
-            <circle cx="12" cy="14" r="2.5" fill="#a8f04a"/>
+            <path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#16C47F"/>
+            <circle cx="12" cy="14" r="2.5" fill="#16C47F"/>
           </svg>
         </div>
         <span class="text-xl font-bold text-white tracking-tight">Gdronic<span class="text-g-lime">.</span></span>
@@ -335,7 +335,7 @@
       </div>
     </div>
     <!-- Mobile menu -->
-    <div id="mobileMenu" class="hidden md:hidden px-6 pb-6 flex flex-col gap-4 text-sm text-g-text border-t border-g-lime/10 pt-4 mt-1">
+    <div id="mobileMenu" class="hidden md:hidden px-6 pb-6 flex flex-col gap-4 text-sm text-g-text pt-4 mt-1">
       <a href="#features" class="hover:text-g-lime py-1">Fitur</a>
       <a href="#how" class="hover:text-g-lime py-1">Cara Kerja</a>
       <a href="#about" class="hover:text-g-lime py-1">Tentang</a>
@@ -345,39 +345,37 @@
   </div>
 </nav>
 
-<!-- ═══════════════════════ HERO ═══════════════════════ -->
-<section id="hero" class="relative flex items-center overflow-hidden">
+<!-- ═══════════════════════ HERO BANNER ═══════════════════════ -->
+<section id="hero" class="relative flex items-center overflow-hidden" style="min-height:100vh;min-height:100svh;">
   <div class="absolute inset-0 bg-gradient-to-br from-[#040d06] via-[#091a0d] to-[#030d05]"></div>
-  <!-- Grid lines -->
-  <div class="absolute inset-0 opacity-[0.035]"
-    style="background-image: linear-gradient(#a8f04a 1px, transparent 1px), linear-gradient(90deg, #a8f04a 1px, transparent 1px); background-size: 72px 72px;"></div>
+  <!-- Grid overlay -->
+  <div class="absolute inset-0 opacity-[0.3]"
+    style="background-image: url('https://png.pngtree.com/background/20250528/original/pngtree-modern-hydroponic-greenhouse-with-climate-control-system-for-cultivation-of-flowers-picture-image_15809863.jpg'),linear-gradient(#16C47F 1px, transparent 1px), linear-gradient(90deg, #16C47F 1px, transparent 1px); background-size: cover;"></div>
   <div class="scan-line" style="top:0"></div>
   <!-- Glow blobs -->
-  <div class="absolute top-1/3 right-1/3 w-[600px] h-[600px] rounded-full bg-g-teal/8 blur-[140px] pointer-events-none"></div>
-  <div class="absolute bottom-1/4 left-1/5 w-[450px] h-[450px] rounded-full bg-g-lime/6 blur-[120px] pointer-events-none"></div>
+  <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-g-lime/6 blur-[140px] pointer-events-none"></div>
+  <div class="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] rounded-full bg-g-teal/5 blur-[120px] pointer-events-none"></div>
   <canvas id="particles"></canvas>
 
-  <!-- Content -->
-  <div class="relative z-10 container-wide pt-24 pb-12 md:pt-32 md:pb-24 grid lg:grid-cols-2 gap-10 lg:gap-16 xl:gap-24 items-center w-full">
+  <div class="relative z-10 container-wide pt-24 pb-12 md:pt-32 md:pb-24 grid lg:grid-cols-2 gap-10 lg:gap-16 xl:gap-20 items-center w-full">
+    <!-- Kiri: teks -->
     <div>
-      <!-- Badge -->
-      {{-- <div class="inline-flex items-center gap-2.5 bg-g-lime/10 border border-g-lime/25 rounded-full px-4 py-2 text-g-lime text-xs font-mono mb-8 md:mb-10">
-        <span class="w-2 h-2 rounded-full bg-g-lime blink"></span>
-        IoT + AI Hydroponic System · v1.0
-      </div> --}}
+      <div class="inline-flex items-center gap-2.5 bg-g-lime/10 border border-g-lime/25 rounded-full px-4 py-2 text-g-lime text-xs font-mono mb-8 md:mb-10">
+        {{-- <span class="w-2 h-2 rounded-full bg-g-lime blink"></span> --}}
+        Smart Hydroponic System
+      </div>
 
-      <h1 class="text-4xl md:text-6xl xl:text-7xl font-bold text-white leading-[1.05] mb-6 md:mb-7">
-        Tanam Lebih Cerdas<br/>
+      <h1 class="text-4xl md:text-6xl xl:text-6xl font-bold text-white leading-[1.05] mb-6 md:mb-7">
+        Bertani Modern<br/>
         dengan<br/>
-        <span class="text-g-lime glow">Teknologi IoT</span>
+        <span class="text-g-lime glow">Gdronic IoT</span>
       </h1>
       <p class="text-g-text/65 text-base md:text-lg xl:text-xl leading-relaxed mb-10 md:mb-12 max-w-lg">
-        Gdronic mengintegrasikan sensor real-time, kontrol otomatis, dan AI chatbot untuk sistem hidroponik yang lebih efisien, akurat, dan mudah dikelola siapa saja.
+        Kelola tanaman hidroponik dari mana saja. Sensor real-time, kontrol otomatis, dan AI chatbot — semua dalam satu platform.
       </p>
 
-      <!-- CTA buttons — hidden on mobile -->
       <div class="hero-cta flex flex-col sm:flex-row gap-4">
-        <a href="{{ Auth::user() ? route('admin.dashboard.index') : route('login') }}" class="inline-flex items-center justify-center gap-2.5 bg-g-lime text-g-black font-bold px-9 py-4 rounded-full hover:bg-g-lime2 transition-all hover:scale-105 shadow-[0_0_36px_rgba(168,240,74,0.35)]">
+        <a href="{{ Auth::user() ? route('admin.dashboard.index') : route('login') }}" class="inline-flex items-center justify-center gap-2.5 bg-g-lime text-g-black font-bold px-9 py-4 rounded-full hover:bg-g-lime2 transition-all hover:scale-105 shadow-[0_0_36px_rgba(22,196,127,0.35)]">
           Coba Gratis Sekarang
           <i class="fa-solid fa-arrow-right"></i>
         </a>
@@ -387,7 +385,6 @@
         </a>
       </div>
 
-      <!-- Mini stats -->
       <div class="flex flex-wrap gap-8 md:gap-10 mt-10 md:mt-14 border-t border-g-lime/10 pt-8 md:pt-10">
         <div>
           <p class="text-2xl md:text-3xl xl:text-4xl font-bold text-white font-mono">98<span class="text-g-lime">%</span></p>
@@ -404,9 +401,63 @@
       </div>
     </div>
 
-    <!-- Hero dashboard mockup -->
-    <div class="relative flex justify-center lg:justify-end w-full">
-      <div class="relative w-full max-w-sm xl:max-w-md hero-dashboard">
+    <!-- Kanan: ilustrasi petani besar + dashboard -->
+    <div class="relative flex justify-center lg:justify-end">
+      <!-- Farmer large illustration -->
+      <div class="absolute -top-16 -right-4 md:-top-24 md:-right-8 w-56 md:w-80 xl:w-96 opacity-70 md:opacity-90 pointer-events-none z-0 select-none">
+        <svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Cap -->
+          <path d="M52 68c0-8 8-14 18-14h60c10 0 18 6 18 14v6H52v-6z" fill="#16C47F" opacity="0.25"/>
+          <path d="M44 74h112l-10-18c-5-8-14-12-23-12H77c-9 0-18 4-23 12l-10 18z" fill="#16C47F" opacity="0.45"/>
+          <!-- Cap brim -->
+          <path d="M42 74h116" stroke="#16C47F" stroke-width="2.5" opacity="0.3"/>
+          <!-- Face -->
+          <ellipse cx="100" cy="92" rx="34" ry="36" fill="#16C47F" opacity="0.07"/>
+          <!-- Eyes -->
+          <ellipse cx="86" cy="86" rx="4" ry="4.5" fill="#16C47F" opacity="0.5"/>
+          <ellipse cx="114" cy="86" rx="4" ry="4.5" fill="#16C47F" opacity="0.5"/>
+          <circle cx="86" cy="85" r="1.5" fill="#0D1A0D" opacity="0.3"/>
+          <circle cx="114" cy="85" r="1.5" fill="#0D1A0D" opacity="0.3"/>
+          <!-- Smile -->
+          <path d="M86 102c6 5 12 7 14 7 2 0 8-2 14-7" stroke="#16C47F" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <!-- Body (baju petani) -->
+          <path d="M68 128c0-10 14-16 32-16s32 6 32 16v56H68v-56z" fill="#16C47F" opacity="0.1"/>
+          <!-- Arms -->
+          <path d="M68 134l-20 26M132 134l20 26" stroke="#16C47F" stroke-width="5" stroke-linecap="round" opacity="0.12"/>
+          <!-- Left hand - memegang tanaman -->
+          <g transform="translate(32,156) scale(0.45)" opacity="0.35">
+            <rect x="8" y="30" width="5" height="22" rx="2" fill="#12A86B"/>
+            <ellipse cx="10" cy="28" rx="6" ry="8" fill="#16C47F"/>
+            <ellipse cx="4" cy="36" rx="5" ry="7" fill="#12A86B" opacity="0.8"/>
+            <ellipse cx="16" cy="36" rx="5" ry="7" fill="#12A86B" opacity="0.8"/>
+            <ellipse cx="10" cy="20" rx="4" ry="5" fill="#16C47F" opacity="0.7"/>
+          </g>
+          <!-- Right hand - memegang cangkul/skop -->
+          <g transform="translate(152,145) scale(0.45)" opacity="0.25">
+            <line x1="12" y1="0" x2="12" y2="50" stroke="#5A7A5A" stroke-width="3" stroke-linecap="round"/>
+            <rect x="4" y="44" width="16" height="8" rx="2" fill="#5A7A5A"/>
+          </g>
+          <!-- Legs -->
+          <path d="M84 184v24M116 184v24" stroke="#16C47F" stroke-width="5" stroke-linecap="round" opacity="0.12"/>
+          <!-- Boots -->
+          <ellipse cx="84" cy="210" rx="10" ry="5" fill="#16C47F" opacity="0.18"/>
+          <ellipse cx="116" cy="210" rx="10" ry="5" fill="#16C47F" opacity="0.18"/>
+          <!-- Tanaman / daun di samping -->
+          <g transform="translate(10,160)" opacity="0.2">
+            <path d="M0 50V10" stroke="#16C47F" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="-6" cy="20" rx="8" ry="14" fill="#16C47F" transform="rotate(-20,-6,20)"/>
+            <ellipse cx="8" cy="14" rx="7" ry="12" fill="#12A86B" transform="rotate(15,8,14)"/>
+            <ellipse cx="-3" cy="36" rx="6" ry="10" fill="#16C47F" transform="rotate(-10,-3,36)"/>
+          </g>
+          <!-- Decorative dots -->
+          <circle cx="30" cy="30" r="2" fill="#16C47F" opacity="0.15"/>
+          <circle cx="170" cy="20" r="1.5" fill="#16C47F" opacity="0.1"/>
+          <circle cx="180" cy="100" r="2.5" fill="#16C47F" opacity="0.08"/>
+        </svg>
+      </div>
+
+      <!-- Dashboard card -->
+      <div class="relative w-full max-w-sm xl:max-w-md hero-dashboard z-10">
         <div class="absolute inset-[-50px] rounded-full border border-g-lime/8 items-center justify-center pointer-events-none hidden md:flex">
           <div class="orbit-dot" style="transform-origin: center;"></div>
         </div>
@@ -418,7 +469,6 @@
             </span>
           </div>
 
-          <!-- pH indicator -->
           <div class="mb-4 md:mb-5">
             <div class="flex justify-between text-xs mb-2">
               <span class="text-g-muted font-mono">pH Level</span>
@@ -432,7 +482,6 @@
             </div>
           </div>
 
-          <!-- Sensor grid -->
           <div class="grid grid-cols-2 gap-2 md:gap-3 mb-4 md:mb-5 sensor-grid-mobile">
             <div class="bg-g-black/60 rounded-xl md:rounded-2xl p-3 md:p-4 border border-g-lime/10">
               <p class="text-[9px] md:text-[10px] text-g-muted font-mono uppercase mb-1 md:mb-1.5 tracking-wider">Suhu Air</p>
@@ -452,7 +501,6 @@
             </div>
           </div>
 
-          <!-- AI alert -->
           <div class="bg-g-lime/8 border border-g-lime/20 rounded-xl md:rounded-2xl px-3 py-2 md:px-4 md:py-3 flex items-start gap-2 md:gap-3">
             <i class="fa-solid fa-lightbulb text-g-lime text-xs md:text-sm mt-0.5 shrink-0"></i>
             <div>
@@ -494,7 +542,7 @@
 
       <div class="reveal grad-border rounded-3xl p-8 xl:p-10 feat-card" style="transition-delay:.1s">
         <div class="icon-box icon-box-lg bg-g-teal/12 mb-7">
-          <i class="fa-solid fa-bolt text-g-teal text-lg"></i>
+          <i class="fa-solid fa-bolt-lightning text-g-teal text-lg"></i>
         </div>
         <p class="text-g-teal font-mono text-xs uppercase tracking-widest mb-3">Misi</p>
         <h3 class="text-xl font-bold text-white mb-4">Automasi yang Dapat Diandalkan</h3>
@@ -503,7 +551,7 @@
 
       <div class="reveal grad-border rounded-3xl p-8 xl:p-10 feat-card" style="transition-delay:.2s">
         <div class="icon-box icon-box-lg bg-g-lime/12 mb-7">
-          <i class="fa-solid fa-shield-check text-g-lime text-lg"></i>
+          <i class="fa-solid fa-star text-g-lime text-lg"></i>
         </div>
         <p class="text-g-lime font-mono text-xs uppercase tracking-widest mb-3">Nilai</p>
         <h3 class="text-xl font-bold text-white mb-4">Inovasi Open &amp; Accessible</h3>
@@ -532,7 +580,7 @@
 <!-- ═══════════════════════ FITUR INTERAKTIF ═══════════════════════ -->
 <section id="features" class="section-py bg-g-dark relative overflow-hidden">
   <div class="absolute inset-0 opacity-[0.025]"
-    style="background-image: radial-gradient(#a8f04a 1px, transparent 1px); background-size: 36px 36px;"></div>
+    style="background-image: radial-gradient(#16C47F 1px, transparent 1px); background-size: 36px 36px;"></div>
   <div class="container-wide relative z-10">
 
     <div class="reveal text-center mb-12 md:mb-16">
@@ -812,7 +860,7 @@
 <!-- ═══════════════════════ TENTANG PEMBUAT ═══════════════════════ -->
 <section id="about" class="section-py bg-g-dark relative overflow-hidden">
   <div class="absolute inset-0 opacity-[0.025]"
-    style="background-image: linear-gradient(#a8f04a 1px, transparent 1px), linear-gradient(90deg, #a8f04a 1px, transparent 1px); background-size: 80px 80px;"></div>
+    style="background-image: linear-gradient(#16C47F 1px, transparent 1px), linear-gradient(90deg, #16C47F 1px, transparent 1px); background-size: 80px 80px;"></div>
   <div class="container-wide relative z-10">
 
     <div class="reveal text-center mb-12 md:mb-16">
@@ -871,17 +919,17 @@
         <div class="space-y-4 md:space-y-5">
           <div>
             <label class="text-xs text-g-muted font-mono uppercase block mb-2.5 tracking-wider">Nama</label>
-            <input type="text" placeholder="Nama kamu" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors" />
+            <input type="text" id="wa-name" placeholder="Nama kamu" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors" />
           </div>
           <div>
             <label class="text-xs text-g-muted font-mono uppercase block mb-2.5 tracking-wider">Email</label>
-            <input type="email" placeholder="email@kamu.com" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors" />
+            <input type="email" id="wa-email" placeholder="email@kamu.com" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors" />
           </div>
           <div>
             <label class="text-xs text-g-muted font-mono uppercase block mb-2.5 tracking-wider">Pesan</label>
-            <textarea rows="4" placeholder="Ceritakan kebutuhanmu…" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors resize-none"></textarea>
+            <textarea rows="4" id="wa-message" placeholder="Ceritakan kebutuhanmu…" class="w-full bg-g-dark border border-g-lime/20 rounded-xl px-4 py-3.5 text-g-text text-sm focus:outline-none focus:border-g-lime transition-colors resize-none"></textarea>
           </div>
-          <button class="w-full bg-g-lime text-g-black font-bold py-4 rounded-xl hover:bg-g-lime2 transition-colors flex items-center justify-center gap-2">
+          <button onclick="sendWA()" class="w-full bg-g-lime text-g-black font-bold py-4 rounded-xl hover:bg-g-lime2 transition-colors flex items-center justify-center gap-2">
             Kirim Pesan <i class="fa-solid fa-arrow-right"></i>
           </button>
         </div>
@@ -935,7 +983,7 @@
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-9 h-9 rounded-lg bg-g-lime/20 border border-g-lime/40 flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"><path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#a8f04a"/><circle cx="12" cy="14" r="2.5" fill="#a8f04a"/></svg>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"><path d="M12 2C6 2 2 8 2 14c0 4 2.5 7 6 8l1-3c-2-.8-3-2.8-3-5 0-4 2.7-8 6-8s6 4 6 8c0 2.2-1 4.2-3 5l1 3c3.5-1 6-4 6-8 0-6-4-12-10-12z" fill="#16C47F"/><circle cx="12" cy="14" r="2.5" fill="#16C47F"/></svg>
           </div>
           <span class="text-xl font-bold text-white">Gdronic<span class="text-g-lime">.</span></span>
         </div>
@@ -975,7 +1023,7 @@
 
 <!-- Back to top button -->
 <button id="backToTop"
-  class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-g-lime text-g-black shadow-[0_0_24px_rgba(168,240,74,0.45)] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:scale-110"
+  class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-g-lime text-g-black shadow-[0_0_24px_rgba(22,196,127,0.45)] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:scale-110"
   onclick="window.scrollTo({top:0,behavior:'smooth'})">
   <i class="fa-solid fa-chevron-up"></i>
 </button>
@@ -993,6 +1041,20 @@ const io = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }});
 }, {threshold:.1});
 reveals.forEach(r => io.observe(r));
+
+// ── Navbar transparent di hero, bg setelah lewat ──
+const navInner = document.getElementById('nav-inner');
+const heroEl = document.getElementById('hero');
+function updateNavBg() {
+  const heroBottom = heroEl.offsetTop + heroEl.offsetHeight;
+  const isPastHero = window.scrollY > heroBottom - 60;
+  navInner.classList.toggle('navbar-blur', isPastHero);
+  navInner.classList.toggle('bg-g-black/75', isPastHero);
+  navInner.classList.toggle('border-g-lime/10', isPastHero);
+  navInner.classList.toggle('border-transparent', !isPastHero);
+}
+updateNavBg();
+window.addEventListener('scroll', updateNavBg);
 
 // ── Back to top ──
 const btn = document.getElementById('backToTop');
@@ -1290,12 +1352,26 @@ function drawParticles() {
     if(p.y<0) p.y=H; if(p.y>H) p.y=0;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(168,240,74,${p.a})`;
+    ctx.fillStyle = `rgba(22,196,127,${p.a})`;
     ctx.fill();
   });
   requestAnimationFrame(drawParticles);
 }
 drawParticles();
+
+// ── WhatsApp Contact Form ──
+function sendWA() {
+  const name = document.getElementById('wa-name').value.trim();
+  const email = document.getElementById('wa-email').value.trim();
+  const message = document.getElementById('wa-message').value.trim();
+  if (!name && !email && !message) { alert('Silakan isi form terlebih dahulu.'); return; }
+  let text = '';
+  if (name)   text += `Halo, saya *${name}*.\n`;
+  if (email)  text += `Email: ${email}\n`;
+  if (message) text += `\n${message}`;
+  const url = `https://wa.me/6287774487198?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
 </script>
 </body>
 </html>

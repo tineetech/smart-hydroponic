@@ -14,9 +14,8 @@
 
         <!-- Page Title -->
         <div style="flex:1;min-width:0;">
-            <div id="page-title" style="font-size:16px;font-weight:700;color:#E8F0E8;">Dashboard</div>
-            <div id="page-breadcrumb" style="font-size:11px;color:#4D5E4D;margin-top:1px;">Ringkasan sistem
-                hidroponik Anda</div>
+            <div id="page-title" style="font-size:16px;font-weight:700;color:#E8F0E8;">Kelola Sensor</div>
+            <div id="page-breadcrumb" style="font-size:11px;color:#4D5E4D;margin-top:1px;">Konfigurasi dan manajemen sensor</div>
         </div>
 
         <!-- Header Right -->
@@ -29,23 +28,15 @@
                     <path d="M12 6v6l4 2" stroke="#5A7A5A" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
                 <span style="font-size:11px;color:#5A7A5A;">Update: <span id="last-update"
-                        style="color:#A8F04A;">--:--:--</span></span>
+                        style="color:#16C47F;">--:--:--</span></span>
             </div>
 
-            <!-- Notif -->
-            <button
-                style="background:#131613;border:1px solid #1E2C1E;border-radius:10px;padding:8px;cursor:pointer;position:relative;color:#7A9A7A;">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor"
-                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="notif-dot"></div>
-            </button>
+            @include('components.admin.notif-dropdown')
 
             <!-- Profile -->
-            <div
-                style="width:36px;height:36px;background:linear-gradient(135deg,#A8F04A,#6BC42A);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;">
-                G</div>
+            <a href="{{ route('profile.edit') }}"
+                style="width:36px;height:36px;background:linear-gradient(135deg,#16C47F,#12A86B);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;text-decoration:none;">
+                {{ auth()->user() ? substr(auth()->user()->name, 0, 1) : 'G' }}</a>
         </div>
     </header>
 
@@ -71,7 +62,7 @@
                         hidroponik</div>
                 </div>
                 <button onclick="openModal('modal-tambah')"
-                    style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#7ab82e,#5f9023);border:1px solid #A8F04A;color:#0D1A0D;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(168,240,74,0.25);transition:all 0.2s;"
+                    style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#16C47F,#12A86B);border:1px solid #16C47F;color:#0D1A0D;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(22,196,127,0.25);transition:all 0.2s;"
                     onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
                         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
@@ -90,7 +81,7 @@
                 <div style="background:#181C18;border:1px solid #1E2C1E;border-radius:12px;padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">
                         SENSOR</div>
-                    <div style="font-size:28px;font-weight:800;color:#A8F04A;">{{ $stats['sensor'] }}</div>
+                    <div style="font-size:28px;font-weight:800;color:#16C47F;">{{ $stats['sensor'] }}</div>
                 </div>
                 <div style="background:#181C18;border:1px solid #1E2C1E;border-radius:12px;padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">
@@ -100,7 +91,7 @@
                 <div style="background:#181C18;border:1px solid #1E2C1E;border-radius:12px;padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">
                         AKTIF</div>
-                    <div style="font-size:28px;font-weight:800;color:#A8F04A;">{{ $stats['aktif'] }}</div>
+                    <div style="font-size:28px;font-weight:800;color:#16C47F;">{{ $stats['aktif'] }}</div>
                 </div>
                 <div style="background:#181C18;border:1px solid #1E2C1E;border-radius:12px;padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">
@@ -122,7 +113,7 @@
                         <input id="search-komponen" type="text" placeholder="Cari nama, tipe, lokasi..."
                             oninput="filterTable()"
                             style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:9px 12px 9px 36px;font-size:13px;color:#C4D4C4;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-                            onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'" />
+                            onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'" />
                     </div>
                     <select id="filter-jenis" onchange="filterTable()"
                         style="background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:9px 14px;font-size:13px;color:#C4D4C4;outline:none;cursor:pointer;min-width:130px;">
@@ -147,7 +138,7 @@
                     </select>
                     <button onclick="resetFilter()"
                         style="background:#1A2A1A;border:1px solid #252C25;border-radius:10px;padding:9px 14px;font-size:12px;color:#5A7A5A;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;"
-                        onmouseover="this.style.borderColor='#A8F04A33';this.style.color='#A8F04A'"
+                        onmouseover="this.style.borderColor='#16C47F33';this.style.color='#16C47F'"
                         onmouseout="this.style.borderColor='#252C25';this.style.color='#5A7A5A'">
                         ↺ Reset
                     </button>
@@ -226,7 +217,7 @@
                                     <td style="padding:14px 16px;">
                                         @if ($row->jenis_komponen === 'sensor')
                                             <span
-                                                style="background:#A8F04A18;border:1px solid #A8F04A33;color:#A8F04A;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;">
+                                                style="background:#16C47F18;border:1px solid #16C47F33;color:#16C47F;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;">
                                                 Sensor
                                             </span>
                                         @else
@@ -327,7 +318,7 @@
 {{-- Detail --}}
 <button onclick="showDetail({{ $row->id }})" title="Lihat Detail"
     style="background:#1A2A1A;border:1px solid #252C25;border-radius:7px;padding:6px 8px;cursor:pointer;color:#5A7A5A;display:flex;align-items:center;transition:all 0.2s;"
-    onmouseover="this.style.borderColor='#A8F04A44';this.style.color='#A8F04A'"
+    onmouseover="this.style.borderColor='#16C47F44';this.style.color='#16C47F'"
     onmouseout="this.style.borderColor='#252C25';this.style.color='#5A7A5A'">
     <i class="fa fa-eye" style="font-size:13px;"></i>
 </button>
@@ -418,7 +409,7 @@
                     </div>
                     <button onclick="closeModal('modal-tambah')"
                         style="background:#1A2A1A;border:1px solid #252C25;border-radius:8px;padding:6px;cursor:pointer;color:#5A7A5A;display:flex;align-items:center;transition:all 0.2s;"
-                        onmouseover="this.style.borderColor='#A8F04A33';this.style.color='#A8F04A'"
+                        onmouseover="this.style.borderColor='#16C47F33';this.style.color='#16C47F'"
                         onmouseout="this.style.borderColor='#252C25';this.style.color='#5A7A5A'">
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
                             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"
@@ -452,7 +443,7 @@
                             <input type="text" name="nama_komponen" id="f-nama"
                                 value="{{ old('nama_komponen') }}" required placeholder="contoh: Sensor pH Larutan"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'" />
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'" />
                         </div>
                         <div>
                             <label
@@ -462,7 +453,7 @@
                             <select name="jenis_komponen" id="f-jenis" required
                                 onchange="toggleSatuanField(this.value)"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;cursor:pointer;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'">
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'">
                                 <option value="">-- Pilih Jenis --</option>
                                 <option value="sensor" {{ old('jenis_komponen') === 'sensor' ? 'selected' : '' }}>
                                     🌡️ Sensor
@@ -483,14 +474,14 @@
                             <input type="text" name="tipe_komponen" id="f-tipe"
                                 value="{{ old('tipe_komponen') }}" placeholder="contoh: DHT22, DS18B20, L298N"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'" />
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'" />
                         </div>
                         <div>
                             <label
                                 style="display:block;font-size:11px;font-weight:700;color:#7A9A7A;margin-bottom:6px;letter-spacing:0.05em;">PROTOKOL</label>
                             <select name="protokol" id="f-protokol"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;cursor:pointer;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'">
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'">
                                 <option value="">-- Pilih Protokol --</option>
                                 @foreach (['I2C', 'OneWire', 'Analog', 'Digital', 'PWM', 'UART'] as $proto)
                                     <option value="{{ $proto }}"
@@ -510,7 +501,7 @@
                         </label>
                         <textarea name="pin_data" id="f-pin" rows="2" placeholder='{"sda": 21, "scl": 22}  atau  {"pin": 4}'
                             style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:12px;color:#C4D4C4;outline:none;resize:vertical;font-family:monospace;box-sizing:border-box;transition:border-color 0.2s;line-height:1.5;"
-                            onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'">{{ old('pin_data') }}</textarea>
+                            onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'">{{ old('pin_data') }}</textarea>
                         <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
                             @foreach (['i2c' => 'I2C Template', 'onewire' => 'OneWire Template', 'analog' => 'Analog Template', 'relay' => 'Relay Template'] as $k => $label)
                                 <button type="button" onclick="setPinTemplate('{{ $k }}')"
@@ -532,7 +523,7 @@
                             <input type="text" name="satuan" id="f-satuan" value="{{ old('satuan') }}"
                                 placeholder="contoh: °C, %, ppm, pH, lux"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'" />
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'" />
                         </div>
                         <div>
                             <label
@@ -540,7 +531,7 @@
                             <input type="text" name="lokasi" id="f-lokasi" value="{{ old('lokasi') }}"
                                 placeholder="contoh: Tangki Nutrisi A"
                                 style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-                                onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'" />
+                                onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'" />
                         </div>
                     </div>
 
@@ -555,7 +546,7 @@
                         <textarea name="batas_nilai" id="f-batas" rows="2"
                             placeholder='{"min": 5.5, "max": 7.0, "optimal_min": 5.8, "optimal_max": 6.5}'
                             style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:12px;color:#C4D4C4;outline:none;resize:vertical;font-family:monospace;box-sizing:border-box;transition:border-color 0.2s;line-height:1.5;"
-                            onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'">{{ old('batas_nilai') }}</textarea>
+                            onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'">{{ old('batas_nilai') }}</textarea>
                         <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
                             @foreach (['ph' => 'pH', 'tds' => 'TDS', 'suhu' => 'Suhu Air', 'level' => 'Level Air'] as $k => $label)
                                 <button type="button" onclick="setBatasTemplate('{{ $k }}')"
@@ -572,7 +563,7 @@
                             style="display:block;font-size:11px;font-weight:700;color:#7A9A7A;margin-bottom:6px;letter-spacing:0.05em;">DESKRIPSI</label>
                         <textarea name="deskripsi" id="f-deskripsi" rows="2" placeholder="Keterangan tambahan tentang komponen ini..."
                             style="width:100%;background:#0D0F0D;border:1px solid #252C25;border-radius:10px;padding:10px 14px;font-size:13px;color:#C4D4C4;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.2s;line-height:1.5;"
-                            onfocus="this.style.borderColor='#A8F04A'" onblur="this.style.borderColor='#252C25'">{{ old('deskripsi') }}</textarea>
+                            onfocus="this.style.borderColor='#16C47F'" onblur="this.style.borderColor='#252C25'">{{ old('deskripsi') }}</textarea>
                     </div>
 
                     {{-- Status --}}
@@ -581,20 +572,20 @@
                             style="display:block;font-size:11px;font-weight:700;color:#7A9A7A;margin-bottom:6px;letter-spacing:0.05em;">STATUS</label>
                         <div style="display:flex;gap:10px;">
                             <label id="lbl-active"
-                                style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0D0F0D;border:1px solid {{ old('status', 'active') === 'active' ? '#A8F04A55' : '#252C25' }};border-radius:10px;padding:10px 16px;flex:1;transition:border-color 0.2s;">
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0D0F0D;border:1px solid {{ old('status', 'active') === 'active' ? '#16C47F55' : '#252C25' }};border-radius:10px;padding:10px 16px;flex:1;transition:border-color 0.2s;">
                                 <input type="radio" name="status" id="f-status-active" value="active"
                                     {{ old('status', 'active') === 'active' ? 'checked' : '' }}
-                                    onchange="highlightStatus()" style="accent-color:#A8F04A;width:15px;height:15px;" />
+                                    onchange="highlightStatus()" style="accent-color:#16C47F;width:15px;height:15px;" />
                                 <div>
-                                    <div style="font-size:13px;font-weight:600;color:#A8F04A;">Aktif</div>
+                                    <div style="font-size:13px;font-weight:600;color:#16C47F;">Aktif</div>
                                     <div style="font-size:10px;color:#4D5E4D;">Komponen siap digunakan</div>
                                 </div>
                             </label>
                             <label id="lbl-nonactive"
-                                style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0D0F0D;border:1px solid {{ old('status') === 'non-active' ? '#A8F04A55' : '#252C25' }};border-radius:10px;padding:10px 16px;flex:1;transition:border-color 0.2s;">
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#0D0F0D;border:1px solid {{ old('status') === 'non-active' ? '#16C47F55' : '#252C25' }};border-radius:10px;padding:10px 16px;flex:1;transition:border-color 0.2s;">
                                 <input type="radio" name="status" id="f-status-nonactive" value="non-active"
                                     {{ old('status') === 'non-active' ? 'checked' : '' }} onchange="highlightStatus()"
-                                    style="accent-color:#A8F04A;width:15px;height:15px;" />
+                                    style="accent-color:#16C47F;width:15px;height:15px;" />
                                 <div>
                                     <div style="font-size:13px;font-weight:600;color:#5A7A5A;">Non-Aktif</div>
                                     <div style="font-size:10px;color:#3D4E3D;">Komponen dinonaktifkan</div>
@@ -611,7 +602,7 @@
                             Batal
                         </button>
                         <button type="submit" id="btn-submit-komponen"
-                            style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#7ab82e,#5f9023);border:1px solid #A8F04A;color:#0D1A0D;font-weight:700;font-size:13px;padding:10px 24px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(168,240,74,0.25);transition:all 0.2s;">
+                            style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#16C47F,#12A86B);border:1px solid #16C47F;color:#0D1A0D;font-weight:700;font-size:13px;padding:10px 24px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(22,196,127,0.25);transition:all 0.2s;">
                             <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
                                 <path
                                     d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"
@@ -845,9 +836,9 @@
 
         function highlightStatus() {
             document.getElementById('lbl-active').style.borderColor =
-                document.getElementById('f-status-active').checked ? '#A8F04A55' : '#252C25';
+                document.getElementById('f-status-active').checked ? '#16C47F55' : '#252C25';
             document.getElementById('lbl-nonactive').style.borderColor =
-                document.getElementById('f-status-nonactive').checked ? '#A8F04A55' : '#252C25';
+                document.getElementById('f-status-nonactive').checked ? '#16C47F55' : '#252C25';
         }
 
         // ══════════════════════════════════════════════════
@@ -873,8 +864,8 @@
             if (!row) return;
 
             const isSensor = row.jenis_komponen === 'sensor';
-            const accentBg = isSensor ? '#A8F04A0A' : '#4A8AF00A';
-            const accentBorder = isSensor ? '#A8F04A22' : '#4A8AF022';
+            const accentBg = isSensor ? '#16C47F0A' : '#4A8AF00A';
+            const accentBorder = isSensor ? '#16C47F22' : '#4A8AF022';
 
             const fields = [
                 ['Jenis', isSensor ? '🌡️ Sensor' : '⚙️ Aktuator'],
@@ -981,10 +972,10 @@
 
             const cfg = {
                 success: {
-                    bg: '#A8F04A18',
-                    border: '#A8F04A',
+                    bg: '#16C47F18',
+                    border: '#16C47F',
                     icon: '✓',
-                    color: '#A8F04A'
+                    color: '#16C47F'
                 },
                 info: {
                     bg: '#4A8AF018',

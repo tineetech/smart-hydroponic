@@ -13,9 +13,8 @@
 
         <!-- Page Title -->
         <div style="flex:1;min-width:0;">
-            <div id="page-title" style="font-size:16px;font-weight:700;color:#E8F0E8;">Dashboard</div>
-            <div id="page-breadcrumb" style="font-size:11px;color:#4D5E4D;margin-top:1px;">Ringkasan sistem
-                hidroponik Anda</div>
+            <div id="page-title" style="font-size:16px;font-weight:700;color:#E8F0E8;">Monitoring Sensor</div>
+            <div id="page-breadcrumb" style="font-size:11px;color:#4D5E4D;margin-top:1px;">Data real-time semua sensor</div>
         </div>
 
         <!-- Header Right -->
@@ -28,23 +27,15 @@
                     <path d="M12 6v6l4 2" stroke="#5A7A5A" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
                 <span style="font-size:11px;color:#5A7A5A;">Update: <span id="last-update"
-                        style="color:#A8F04A;">--:--:--</span></span>
+                        style="color:#16C47F;">--:--:--</span></span>
             </div>
 
-            <!-- Notif -->
-            <button
-                style="background:#131613;border:1px solid #1E2C1E;border-radius:10px;padding:8px;cursor:pointer;position:relative;color:#7A9A7A;">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor"
-                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="notif-dot"></div>
-            </button>
+            @include('components.admin.notif-dropdown')
 
             <!-- Profile -->
-            <div
-                style="width:36px;height:36px;background:linear-gradient(135deg,#A8F04A,#6BC42A);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;">
-                G</div>
+            <a href="{{ route('profile.edit') }}"
+                style="width:36px;height:36px;background:linear-gradient(135deg,#16C47F,#12A86B);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0D1A0D;cursor:pointer;flex-shrink:0;text-decoration:none;">
+                {{ auth()->user() ? substr(auth()->user()->name, 0, 1) : 'G' }}</a>
         </div>
     </header>
 
@@ -67,7 +58,7 @@
                 <div class="stat-card" style="padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:600;letter-spacing:0.05em;margin-bottom:8px;">
                         SENSOR ONLINE</div>
-                    <div style="font-size:28px;font-weight:800;color:#A8F04A;" id="stat-online">
+                    <div style="font-size:28px;font-weight:800;color:#16C47F;" id="stat-online">
                         {{ $stats['online'] }}</div>
                     <div style="font-size:11px;color:#5A7A5A;margin-top:4px;">Aktif & membaca data</div>
                 </div>
@@ -75,7 +66,7 @@
                 <div class="stat-card" style="padding:16px;">
                     <div style="font-size:10px;color:#4D5E4D;font-weight:600;letter-spacing:0.05em;margin-bottom:8px;">
                         STATUS NORMAL</div>
-                    <div style="font-size:28px;font-weight:800;color:#A8F04A;" id="stat-normal">
+                    <div style="font-size:28px;font-weight:800;color:#16C47F;" id="stat-normal">
                         {{ $stats['normal'] }}</div>
                     <div style="font-size:11px;color:#5A7A5A;margin-top:4px;">Dalam batas optimal</div>
                 </div>
@@ -131,9 +122,9 @@
 
                         $warna = match (true) {
                             str_contains($tipe, 'ds18b20') => [
-                                'hex' => '#A8F04A',
-                                'bg' => '#A8F04A18',
-                                'border' => '#A8F04A22',
+                                'hex' => '#16C47F',
+                                'bg' => '#16C47F18',
+                                'border' => '#16C47F22',
                             ],
                             str_contains($tipe, 'dht22') => [
                                 'hex' => '#4A8AF0',
@@ -155,7 +146,7 @@
                                 'bg' => '#A84AF018',
                                 'border' => '#A84AF022',
                             ],
-                            default => ['hex' => '#A8F04A', 'bg' => '#A8F04A18', 'border' => '#A8F04A22'],
+                            default => ['hex' => '#16C47F', 'bg' => '#16C47F18', 'border' => '#16C47F22'],
                         };
 
                         $nilaiUtama = $nilai[array_key_first($nilai ?? [''])] ?? '-';
@@ -366,10 +357,10 @@
                             </div>
                             <div style="display:flex;align-items:center;gap:4px;">
                                 <div data-sensor="{{ $sensor->id }}" data-field="dot"
-                                    style="width:6px;height:6px;background:{{ $kualitas === 'error' ? '#F04A4A' : '#A8F04A' }};border-radius:50%;{{ $kualitas !== 'error' ? 'animation:pulse-dot 1.5s infinite;' : '' }}">
+                                    style="width:6px;height:6px;background:{{ $kualitas === 'error' ? '#F04A4A' : '#16C47F' }};border-radius:50%;{{ $kualitas !== 'error' ? 'animation:pulse-dot 1.5s infinite;' : '' }}">
                                 </div>
                                 <span data-sensor="{{ $sensor->id }}" data-field="online-text"
-                                    style="font-size:10px;color:{{ $kualitas === 'error' ? '#F04A4A' : '#A8F04A' }};font-weight:600;">
+                                    style="font-size:10px;color:{{ $kualitas === 'error' ? '#F04A4A' : '#16C47F' }};font-weight:600;">
                                     {{ $kualitas === 'error' ? 'OFFLINE' : 'ONLINE' }}
                                 </span>
                             </div>
@@ -393,12 +384,12 @@
                         $grafikData = $grafik[$sensor->id] ?? collect();
                         $tipe = strtolower($sensor->tipe_komponen ?? '');
                         $warna = match (true) {
-                            str_contains($tipe, 'ds18b20') => '#A8F04A',
+                            str_contains($tipe, 'ds18b20') => '#16C47F',
                             str_contains($tipe, 'dht22') => '#4A8AF0',
                             str_contains($tipe, 'hc-sr04') || str_contains($tipe, 'hcsr04') => '#4AF0C8',
                             str_contains($tipe, 'ph') => '#F0A84A',
                             str_contains($tipe, 'tds') => '#A84AF0',
-                            default => '#A8F04A',
+                            default => '#16C47F',
                         };
                     @endphp
                     <div class="stat-card" style="padding:20px;">
@@ -502,9 +493,9 @@
                                     $tipe = strtolower($log->komponen->tipe_komponen ?? '');
                                     $warna = match (true) {
                                         str_contains($tipe, 'ds18b20') => [
-                                            'hex' => '#A8F04A',
-                                            'bg' => '#A8F04A18',
-                                            'border' => '#A8F04A22',
+                                            'hex' => '#16C47F',
+                                            'bg' => '#16C47F18',
+                                            'border' => '#16C47F22',
                                             'abbr' => 'DS',
                                         ],
                                         str_contains($tipe, 'dht22') => [
@@ -532,9 +523,9 @@
                                             'abbr' => 'TD',
                                         ],
                                         default => [
-                                            'hex' => '#A8F04A',
-                                            'bg' => '#A8F04A18',
-                                            'border' => '#A8F04A22',
+                                            'hex' => '#16C47F',
+                                            'bg' => '#16C47F18',
+                                            'border' => '#16C47F22',
                                             'abbr' => 'SN',
                                         ],
                                     };
@@ -576,7 +567,7 @@
                                     <td style="padding:12px 16px;">
                                         @if ($log->sudah_diproses)
                                             <span
-                                                style="font-size:11px;color:#A8F04A;background:#A8F04A18;border:1px solid #A8F04A33;border-radius:4px;padding:2px 8px;font-weight:600;">✓
+                                                style="font-size:11px;color:#16C47F;background:#16C47F18;border:1px solid #16C47F33;border-radius:4px;padding:2px 8px;font-weight:600;">✓
                                                 Ya</span>
                                         @else
                                             <span
@@ -621,7 +612,7 @@
                         @foreach ($logs->getUrlRange(1, $logs->lastPage()) as $page => $url)
                             @if ($page == $logs->currentPage())
                                 <span
-                                    style="font-size:11px;background:#A8F04A18;border:1px solid #A8F04A33;color:#A8F04A;border-radius:6px;padding:4px 10px;font-weight:600;">{{ $page }}</span>
+                                    style="font-size:11px;background:#16C47F18;border:1px solid #16C47F33;color:#16C47F;border-radius:6px;padding:4px 10px;font-weight:600;">{{ $page }}</span>
                             @elseif(abs($page - $logs->currentPage()) <= 2)
                                 <a href="{{ $url }}"
                                     style="font-size:11px;background:#131613;border:1px solid #1E2C1E;color:#5A7A5A;border-radius:6px;padding:4px 10px;text-decoration:none;">{{ $page }}</a>
@@ -668,7 +659,7 @@
             // Jika data kurang dari 20, isi dengan 0
             while (vals.length < 20) vals.unshift(0);
 
-            const color = warnaMap[sensor.id] || '#A8F04A';
+            const color = warnaMap[sensor.id] || '#16C47F';
 
 
             miniCharts[sensor.id] = new Chart(ctx, {
@@ -729,7 +720,7 @@
                     backgroundColor: '#1A2A1A',
                     borderColor: '#2A3A2A',
                     borderWidth: 1,
-                    titleColor: '#A8F04A',
+                    titleColor: '#16C47F',
                     bodyColor: '#C4D4C4',
                     padding: 10,
                     cornerRadius: 8
@@ -768,7 +759,7 @@
 
             const data = grafikData[sensor.id] ?? [];
             const labels = data.map(d => d.waktu);
-            const color = warnaMap[sensor.id] || '#A8F04A';
+            const color = warnaMap[sensor.id] || '#16C47F';
             const tipe = sensor.tipe;
 
             // Untuk DHT22 — 2 dataset
@@ -951,7 +942,10 @@
     </script>
     <script>
         const POLL_URL = "{{ route('admin.monitor.sensor.live') }}";
-        const POLL_MS = 3000; // 5 detik
+        const POLL_MS = 3000; // 3 detik
+
+        // Simpan hash data tiap sensor untuk deteksi perubahan
+        const prevData = {};
 
         // Mapping kualitas → badge class & teks
         const BADGE = {
@@ -1039,25 +1033,30 @@
                     // Dot online/offline
                     document.querySelectorAll(`[data-sensor="${id}"][data-field="dot"]`)
                         .forEach(el => {
-                            el.style.background = log.is_online ? '#A8F04A' : '#F04A4A';
+                            el.style.background = log.is_online ? '#16C47F' : '#F04A4A';
                         });
 
 
-                    // ── Update Mini Chart ────────────────────────────────────
-                    if (miniCharts[id]) {
+                    // ── Deteksi apakah ada data baru ──────────────────────────────
+                    const dataHash = JSON.stringify(nilai);
+                    const isNewData = prevData[id] !== dataHash;
+                    prevData[id] = dataHash;
+
+                    // ── Update Mini Chart (hanya jika ada data baru) ──────────
+                    if (isNewData && miniCharts[id]) {
                         const mc = miniCharts[id];
                         const firstKey = Object.keys(nilai)[0];
                         const newVal = parseFloat(nilai[firstKey]) || 0;
 
                         mc.data.datasets[0].data.push(newVal);
                         if (mc.data.datasets[0].data.length > 20) {
-                            mc.data.datasets[0].data.shift(); // hapus data paling lama
+                            mc.data.datasets[0].data.shift();
                         }
-                        mc.update('none'); // 'none' = tanpa animasi, lebih smooth
+                        mc.update('none');
                     }
 
-                    // ── Update Main Graph ─────────────────────────────────────
-                    if (mainCharts[id]) {
+                    // ── Update Main Graph (hanya jika ada data baru) ──────────
+                    if (isNewData && mainCharts[id]) {
                         const mc = mainCharts[id];
                         const now = new Date().toLocaleTimeString('id-ID', {
                             hour: '2-digit',
@@ -1065,11 +1064,9 @@
                             second: '2-digit'
                         });
 
-                        // Tambah label waktu
                         mc.data.labels.push(now);
                         if (mc.data.labels.length > 20) mc.data.labels.shift();
 
-                        // Update tiap dataset sesuai tipe sensor
                         const tipe = sensorsData.find(s => s.id == id)?.tipe ?? '';
 
                         if (tipe.includes('dht22')) {
@@ -1085,12 +1082,10 @@
                         } else if (tipe.includes('ds18b20')) {
                             mc.data.datasets[0].data.push(nilai.suhu_air ?? null);
                         } else {
-                            // fallback generic
                             const firstKey = Object.keys(nilai)[0];
                             mc.data.datasets[0].data.push(nilai[firstKey] ?? null);
                         }
 
-                        // Trim semua dataset ke max 20 titik
                         mc.data.datasets.forEach(ds => {
                             if (ds.data.length > 20) ds.data.shift();
                         });
@@ -1106,7 +1101,6 @@
                         const optMax = batas.optimal_max ?? batas.max ?? 100;
                         const range = optMax - optMin || 1;
 
-                        // Ambil nilai utama (nilai pertama dari objek)
                         const firstKey = Object.keys(nilai)[0];
                         const nilaiUtama = parseFloat(nilai[firstKey]);
 
@@ -1114,11 +1108,9 @@
                             const pct = Math.min(100, Math.max(0, Math.round(((nilaiUtama - optMin) / range) *
                                 100)));
 
-                            // Update teks persentase
                             document.querySelectorAll(`[data-sensor="${id}"][data-field="pct"]`)
                                 .forEach(el => el.textContent = pct + '%');
 
-                            // Update lebar progress bar
                             document.querySelectorAll(`[data-sensor="${id}"][data-field="progress"]`)
                                 .forEach(el => el.style.width = pct + '%');
                         }
