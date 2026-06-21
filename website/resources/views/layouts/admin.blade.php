@@ -4,15 +4,25 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gdronic — Admin Panel</title>
+    <title>@yield('title', 'Gdronic — Admin Panel')</title>
+
+    <!-- ===== Favicon & App Icons ===== -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('img/logo.svg') }}">
+
+    <!-- ===== SEO Meta Tags ===== -->
+    <meta name="description" content="Gdronic Admin Panel – Kelola sensor, aktuator, dan data hidroponik secara real-time.">
+    <meta name="keywords" content="admin panel, hidroponik, iot, gdronic, dashboard, sensor, aktuator">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <style type="text/tailwindcss">
         @theme {

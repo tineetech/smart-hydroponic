@@ -3,7 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gdronic – Smart Hydroponic System</title>
+  <title>Gdronic – Smart Hydroponic System | IoT Hidroponik Otomatis</title>
+
+  <!-- ===== Favicon & App Icons ===== -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicon.png') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ asset('img/logo.svg') }}">
+
+  <!-- ===== SEO Meta Tags ===== -->
+  <meta name="description" content="Gdronic – Smart Hydroponic System. Kelola tanaman hidroponik dari mana saja. Sensor real-time, kontrol otomatis, dan AI chatbot dalam satu platform IoT berbasis ESP32 & Laravel.">
+  <meta name="keywords" content="hidroponik, smart hydroponic, iot, iot hidroponik, smart farming, gdronic, tanaman, sensor, otomatis, ai chatbot, esp32, laravel, monitoring tanaman, pertanian urban">
+  <meta name="author" content="Justine – SMKN 4 Bogor">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{{ url()->current() }}">
+
+  <!-- ===== Open Graph (Facebook, LinkedIn, etc.) ===== -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Gdronic – Smart Hydroponic System">
+  <meta property="og:description" content="Kelola tanaman hidroponik dari mana saja dengan sensor real-time, kontrol otomatis, dan AI chatbot dalam satu platform IoT.">
+  <meta property="og:url" content="{{ url()->current() }}">
+  <meta property="og:image" content="{{ asset('img/logo.png') }}">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:site_name" content="Gdronic">
+  <meta property="og:locale" content="id_ID">
+
+  <!-- ===== Twitter Card ===== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gdronic – Smart Hydroponic System">
+  <meta name="twitter:description" content="Kelola tanaman hidroponik dari mana saja dengan sensor real-time, kontrol otomatis, dan AI chatbot.">
+  <meta name="twitter:image" content="{{ asset('img/logo.png') }}">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
