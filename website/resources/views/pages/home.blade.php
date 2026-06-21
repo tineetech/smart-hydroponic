@@ -462,6 +462,50 @@
 
     .fallback-note { font-size: 11px; color: #5a7a60; margin-top: 6px; font-style: italic; }
 
+    /* ═══════ VISION CARDS ENHANCEMENTS ═══════ */
+    .vision-card {
+      position: relative; overflow: hidden;
+      transition: transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s ease;
+    }
+    .vision-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(600px circle at var(--mx,50%) var(--my,50%), rgba(22,196,127,0.06), transparent 60%);
+      opacity: 0; transition: opacity .5s ease; pointer-events: none;
+    }
+    .vision-card:hover::before { opacity: 1; }
+    .vision-card::after {
+      content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
+      border-radius: inherit; border: 1px solid transparent;
+      background: linear-gradient(135deg, rgba(22,196,127,0), rgba(22,196,127,0.3), rgba(22,196,127,0)) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      opacity: 0; transition: opacity .5s ease; pointer-events: none;
+    }
+    .vision-card:hover::after { opacity: 1; }
+    .vision-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 24px 80px rgba(22,196,127,0.12); }
+    .vision-icon-wrap {
+      position: relative; width: 56px; height: 56px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 28px;
+      transition: transform .4s cubic-bezier(.4,0,.2,1);
+    }
+    .vision-card:hover .vision-icon-wrap { transform: scale(1.1) rotate(-4deg); }
+    .vision-icon-wrap::after {
+      content: ''; position: absolute; inset: -4px; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(22,196,127,0.2), transparent);
+      opacity: 0; transition: opacity .4s ease; z-index: -1;
+    }
+    .vision-card:hover .vision-icon-wrap::after { opacity: 1; }
+    .vision-number {
+      position: absolute; top: 16px; right: 20px; font-size: 48px; font-weight: 800;
+      font-family: 'Space Mono', monospace; color: rgba(22,196,127,0.06); line-height: 1;
+      pointer-events: none; user-select: none;
+    }
+    .vision-card:hover .vision-number { color: rgba(22,196,127,0.12); }
+
+    /* ═══════ COUNTER ANIMATION ═══════ */
+    .counter-value { display: inline; }
+
+
     @media (max-width: 640px) {
       #chat-popup {
         right: 12px; bottom: 88px; width: calc(100vw - 24px);
@@ -475,9 +519,82 @@
       .msg { max-width: 92%; }
       .chat-input-area { padding: 10px 12px 14px; }
     }
+
+    /* ═══════ SPLASH SCREEN ═══════ */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #080f0a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity .6s ease, visibility .6s ease;
+    }
+    #splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #splash-logo {
+      width: 96px; height: 96px; position: relative;
+      animation: splash-logo-in 1s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes splash-logo-in {
+      0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    #splash-logo svg { width: 100%; height: 100%; }
+    #splash-ring {
+      position: absolute; inset: -12px; border-radius: 50%;
+      border: 2px solid rgba(22,196,127,0.15);
+      animation: splash-ring-pulse 2s ease-in-out infinite;
+    }
+    @keyframes splash-ring-pulse {
+      0%,100% { transform: scale(1); opacity: .4; }
+      50% { transform: scale(1.12); opacity: 0; }
+    }
+    #splash-ring-2 {
+      position: absolute; inset: -28px; border-radius: 50%;
+      border: 1px solid rgba(22,196,127,0.08);
+      animation: splash-ring-pulse 2s ease-in-out infinite;
+      animation-delay: .6s;
+    }
+    #splash-title {
+      margin-top: 28px; font-size: 22px; font-weight: 700; color: #fff;
+      letter-spacing: 0.05em;
+      animation: splash-fade-up .8s ease .2s both;
+    }
+    #splash-title span { color: #16C47F; }
+    #splash-sub {
+      margin-top: 6px; font-size: 12px; color: #5a7a60; font-family: 'Space Mono', monospace;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      animation: splash-fade-up .8s ease .35s both;
+    }
+    @keyframes splash-fade-up {
+      from { transform: translateY(16px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    #splash-loader {
+      position: absolute; bottom: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, #16C47F, #1AE08F);
+      animation: splash-loader 2.2s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes splash-loader {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+    /* ★ Untuk menonaktifkan splash screen permanen, set localStorage key:
+         localStorage.setItem('gdronic_splash_disabled', '1')
+       Atau buka halaman dengan parameter URL: ?nosplash=1
+       Hapus key tersebut untuk mengaktifkan kembali. */
   </style>
 </head>
 <body>
+
+<!-- ═══════ SPLASH SCREEN ═══════ -->
+<div id="splash">
+  <div id="splash-logo">
+    <div id="splash-ring"></div>
+    <div id="splash-ring-2"></div>
+    <img src="{{ asset('img/logo.png') }}" alt="">
+  </div>
+  <div id="splash-title">Gdronic <span>AI</span></div>
+  <div id="splash-sub">Smart Hydroponic System</div>
+  <div id="splash-loader"></div>
+</div>
 
 <!-- ═══════════════════════ NAVBAR ═══════════════════════ -->
 <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
@@ -712,27 +829,30 @@
     </div>
 
     <div class="grid md:grid-cols-3 gap-6 xl:gap-8">
-      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 feat-card">
-        <div class="icon-box icon-box-lg bg-g-lime/12 mb-7">
-          <i class="fa-solid fa-eye text-g-lime text-lg"></i>
+      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 vision-card" data-mouse-track>
+        <span class="vision-number">01</span>
+        <div class="vision-icon-wrap" style="background:rgba(22,196,127,0.1)">
+          <i class="fa-solid fa-eye text-g-lime text-xl"></i>
         </div>
         <p class="text-g-lime font-mono text-xs uppercase tracking-widest mb-3">Visi</p>
         <h3 class="text-xl font-bold text-white mb-4">Pertanian Urban Masa Depan</h3>
         <p class="text-g-text/55 leading-relaxed text-sm">Mewujudkan ekosistem pertanian perkotaan yang cerdas dan berkelanjutan, di mana siapapun dapat mengelola tanaman hidroponik dengan mudah lewat teknologi.</p>
       </div>
 
-      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 feat-card" style="transition-delay:.1s">
-        <div class="icon-box icon-box-lg bg-g-teal/12 mb-7">
-          <i class="fa-solid fa-bolt-lightning text-g-teal text-lg"></i>
+      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 vision-card" style="transition-delay:.1s" data-mouse-track>
+        <span class="vision-number">02</span>
+        <div class="vision-icon-wrap" style="background:rgba(18,168,107,0.1)">
+          <i class="fa-solid fa-bolt-lightning text-g-teal text-xl"></i>
         </div>
         <p class="text-g-teal font-mono text-xs uppercase tracking-widest mb-3">Misi</p>
         <h3 class="text-xl font-bold text-white mb-4">Automasi yang Dapat Diandalkan</h3>
         <p class="text-g-text/55 leading-relaxed text-sm">Menghadirkan solusi monitoring &amp; kontrol berbasis IoT yang akurat, hemat energi, dan terintegrasi AI agar petani urban fokus pada hasil, bukan kerumitan teknis.</p>
       </div>
 
-      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 feat-card" style="transition-delay:.2s">
-        <div class="icon-box icon-box-lg bg-g-lime/12 mb-7">
-          <i class="fa-solid fa-star text-g-lime text-lg"></i>
+      <div class="reveal grad-border rounded-3xl p-8 xl:p-10 vision-card" style="transition-delay:.2s" data-mouse-track>
+        <span class="vision-number">03</span>
+        <div class="vision-icon-wrap" style="background:rgba(22,196,127,0.1)">
+          <i class="fa-solid fa-star text-g-lime text-xl"></i>
         </div>
         <p class="text-g-lime font-mono text-xs uppercase tracking-widest mb-3">Nilai</p>
         <h3 class="text-xl font-bold text-white mb-4">Inovasi Open &amp; Accessible</h3>
@@ -746,11 +866,11 @@
       <div class="grid md:grid-cols-2 gap-8 md:gap-10 xl:gap-16">
         <div id="compare-bars" class="space-y-6"></div>
         <div class="flex flex-col justify-center pl-0 md:pl-10 border-t md:border-t-0 md:border-l border-g-lime/10 pt-8 md:pt-0">
-          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2">60<span class="text-g-lime">%</span></p>
+          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2"><span class="counter-value" data-target="60" data-suffix="%">0</span></p>
           <p class="text-g-text/55 text-sm mb-6 md:mb-8">lebih sedikit air dibanding pertanian tanah biasa</p>
-          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2">3<span class="text-g-lime">x</span></p>
+          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2"><span class="counter-value" data-target="3" data-suffix="x">0</span></p>
           <p class="text-g-text/55 text-sm mb-6 md:mb-8">kecepatan pertumbuhan tanaman lebih tinggi</p>
-          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2">0<span class="text-g-lime"> pestisida</span></p>
+          <p class="text-3xl md:text-4xl xl:text-5xl font-bold text-white font-mono mb-2"><span class="counter-value" data-target="0" data-suffix="">0</span><span class="text-g-lime"> pestisida</span></p>
           <p class="text-g-text/55 text-sm">sistem tertutup bebas hama tanah</p>
         </div>
       </div>
@@ -1443,7 +1563,16 @@ function toggleDevice(btn, i) {
   btn.querySelector('span').className = `absolute top-0.5 ${!on?'left-6':'left-0.5'} w-5 h-5 rounded-full bg-white transition-all duration-300 shadow`;
 }
 
-// ── Compare bars ──
+// ── Vision card mouse tracking ──
+document.querySelectorAll('[data-mouse-track]').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
+});
+
+// ── Compare bars + counter ──
 const bars = [
   {label:'Efisiensi Air', gdronic:90, konv:35},
   {label:'Kecepatan Tumbuh', gdronic:85, konv:30},
@@ -1455,18 +1584,62 @@ if(cb) bars.forEach(b => {
   cb.innerHTML += `
     <div>
       <div class="flex justify-between text-xs text-g-muted mb-2 font-mono">
-        <span>${b.label}</span><span class="text-g-lime">${b.gdronic}%</span>
+        <span>${b.label}</span><span class="text-g-lime gdronic-pct">0%</span>
       </div>
       <div class="relative h-3 bg-g-dark rounded-full overflow-hidden">
-        <div class="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-g-teal to-g-lime ph-bar" style="width:0%" data-target="${b.gdronic}%"></div>
+        <div class="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-g-teal to-g-lime ph-bar" style="width:0%" data-target="${b.gdronic}"></div>
         <div class="absolute left-0 top-0 h-full rounded-full bg-g-muted/25" style="width:${b.konv}%"></div>
       </div>
       <div class="flex justify-between text-[10px] mt-1.5 text-g-muted font-mono"><span>Konvensional ${b.konv}%</span><span class="text-g-lime">Gdronic</span></div>
     </div>`;
 });
-setTimeout(() => {
-  document.querySelectorAll('.ph-bar[data-target]').forEach(el => el.style.width = el.dataset.target);
-}, 600);
+
+function animateCompare(entry) {
+  if (entry.isIntersecting) {
+    // Masuk viewport → animate
+    document.querySelectorAll('.ph-bar[data-target]').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+    document.querySelectorAll('.gdronic-pct').forEach((el, i) => {
+      if (bars[i]) animateCounter(el, 0, bars[i].gdronic, 1200, '%');
+    });
+    document.querySelectorAll('.counter-value').forEach(el => {
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      animateCounter(el, 0, target, 1500, suffix);
+    });
+  } else {
+    // Keluar viewport → reset
+    document.querySelectorAll('.ph-bar[data-target]').forEach(el => {
+      el.style.width = '0%';
+    });
+    document.querySelectorAll('.gdronic-pct').forEach(el => {
+      el.textContent = '0%';
+    });
+    document.querySelectorAll('.counter-value').forEach(el => {
+      el.textContent = '0' + (el.dataset.suffix || '');
+    });
+  }
+}
+
+function animateCounter(el, start, end, duration, suffix) {
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = Math.round(start + (end - start) * eased);
+    el.textContent = val + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+const observer = new IntersectionObserver(entries => entries.forEach(animateCompare), { threshold: 0.3 });
+const target = document.getElementById('compare-bars');
+if (target) {
+  observer.observe(target.closest('.grad-border') || target);
+}
 
 // ── pH Validator ──
 function validatePH() {
@@ -1679,6 +1852,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('chat-input');
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 });
+
+// ── Splash screen ──
+(function() {
+  const disabled = localStorage.getItem('gdronic_splash_disabled') || new URLSearchParams(location.search).has('nosplash');
+  if (disabled) return;
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  // Cegah scroll selama splash
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    splash.classList.add('hide');
+    document.body.style.overflow = '';
+    // Hapus dari DOM setelah transisi selesai biar tidak ganggu interaksi
+    setTimeout(() => splash.remove(), 600);
+  }, 2600);
+})();
 </script>
 
 <!-- ═══ AI CHATBOT POPUP HTML ═══ -->
