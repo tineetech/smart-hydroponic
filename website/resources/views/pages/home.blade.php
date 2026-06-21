@@ -591,7 +591,7 @@
     <div id="splash-ring-2"></div>
     <img src="{{ asset('img/logo.png') }}" alt="">
   </div>
-  <div id="splash-title">Gdronic <span>AI</span></div>
+  <div id="splash-title">Gdronic<span>.</span></div>
   <div id="splash-sub">Smart Hydroponic System</div>
   <div id="splash-loader"></div>
 </div>
