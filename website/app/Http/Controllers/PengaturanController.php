@@ -41,7 +41,8 @@ class PengaturanController extends Controller
                 default   => (string) $nilai,
             };
 
-            if ($setting->is_encrypted && !empty($nilaiSimpan)) {
+            if ($setting->is_encrypted) {
+                if (empty($nilaiSimpan)) continue;
                 $nilaiSimpan = Crypt::encryptString((string) $nilaiSimpan);
             }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KelolaNotifikasiController;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/api-tester', [HomeController::class, 'indexApiTester'])->name('api-tester');
+Route::post('/ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard.index');

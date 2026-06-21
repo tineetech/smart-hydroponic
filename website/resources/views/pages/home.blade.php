@@ -324,6 +324,156 @@
         margin-bottom: 0.5rem;
       }
     }
+
+    /* ═══════ AI CHATBOT POPUP ═══════ */
+    #chat-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #16C47F, #12A86B);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 24px rgba(22,196,127,0.4);
+      transition: transform .3s, box-shadow .3s;
+    }
+    #chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 32px rgba(22,196,127,0.55); }
+    #chat-fab i { font-size: 22px; color: #080f0a; }
+
+    @keyframes fab-pulse {
+      0%, 100% { box-shadow: 0 4px 24px rgba(22,196,127,0.4); }
+      50% { box-shadow: 0 4px 40px rgba(22,196,127,0.7); }
+    }
+    #chat-fab.pulse { animation: fab-pulse 2.5s ease-in-out infinite; }
+
+    #chat-popup {
+      position: fixed; bottom: 96px; right: 24px; z-index: 998;
+      width: 380px; height: 540px; max-height: calc(100vh - 130px);
+      background: #0d1a10; border: 1px solid rgba(22,196,127,0.2);
+      border-radius: 20px; display: none; flex-direction: column;
+      box-shadow: 0 16px 64px rgba(0,0,0,0.6), 0 0 80px rgba(22,196,127,0.05);
+      overflow: hidden; transform: translateY(20px); opacity: 0;
+      transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+    }
+    #chat-popup.open { display: flex; transform: translateY(0); opacity: 1; }
+
+    .chat-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; border-bottom: 1px solid rgba(22,196,127,0.12);
+      background: rgba(22,196,127,0.04); flex-shrink: 0;
+    }
+    .chat-avatar {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, #16C47F, #12A86B);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: #080f0a; flex-shrink: 0;
+    }
+    .chat-info { flex: 1; min-width: 0; }
+    .chat-title { font-size: 14px; font-weight: 700; color: #fff; }
+    .chat-status { font-size: 11px; color: #16C47F; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+    .chat-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #16C47F; }
+    #chat-close {
+      width: 32px; height: 32px; border-radius: 10px; border: none;
+      background: rgba(255,255,255,0.06); color: #5a7a60; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+      transition: background .2s, color .2s; flex-shrink: 0;
+    }
+    #chat-close:hover { background: rgba(255,255,255,0.12); color: #d4ecd9; }
+
+    #chat-messages {
+      flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;
+    }
+    #chat-messages::-webkit-scrollbar { width: 3px; }
+    #chat-messages::-webkit-scrollbar-track { background: transparent; }
+    #chat-messages::-webkit-scrollbar-thumb { background: rgba(22,196,127,0.3); border-radius: 99px; }
+
+    .msg { display: flex; gap: 8px; max-width: 88%; animation: msg-in .3s ease; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    @keyframes msg-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.55; word-wrap: break-word;
+    }
+    .msg.ai .msg-bubble {
+      background: #132016; border: 1px solid rgba(22,196,127,0.12); color: #d4ecd9;
+      border-top-left-radius: 4px;
+    }
+    .msg.user .msg-bubble {
+      background: #16C47F; color: #080f0a; font-weight: 500;
+      border-top-right-radius: 4px;
+    }
+    .msg.user .msg-bubble p { margin: 0; }
+    .msg.ai .msg-bubble p { margin: 0 0 6px; }
+    .msg.ai .msg-bubble p:last-child { margin-bottom: 0; }
+
+    .msg.ai .msg-bubble strong { color: #16C47F; }
+    .msg.ai .msg-bubble code {
+      background: rgba(22,196,127,0.1); border: 1px solid rgba(22,196,127,0.15);
+      border-radius: 4px; padding: 1px 5px; font-size: 12px; font-family: 'Space Mono', monospace;
+    }
+    .msg.ai .msg-bubble pre {
+      background: #080f0a; border: 1px solid rgba(22,196,127,0.12);
+      border-radius: 8px; padding: 10px; margin: 6px 0; overflow-x: auto;
+    }
+    .msg.ai .msg-bubble pre code { background: none; border: none; padding: 0; }
+    .msg.ai .msg-bubble a { color: #16C47F; text-decoration: underline; }
+    .msg.ai .msg-bubble p { margin: 0 0 8px; }
+    .msg.ai .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg.ai .msg-bubble ul, .msg.ai .msg-bubble ol { margin: 4px 0; padding-left: 20px; }
+    .msg.ai .msg-bubble li { margin-bottom: 3px; }
+
+    .msg-avatar {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    }
+    .msg-avatar.ai { background: rgba(22,196,127,0.15); color: #16C47F; }
+    .msg-avatar.user { background: rgba(255,255,255,0.1); color: #fff; }
+
+    .typing-indicator {
+      display: flex; gap: 4px; align-items: center; padding: 4px 0;
+    }
+    .typing-indicator span {
+      width: 7px; height: 7px; border-radius: 50%; background: #5a7a60;
+      animation: typing-bounce 1.4s infinite;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: .2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: .4s; }
+    @keyframes typing-bounce {
+      0%,80%,100% { transform: translateY(0); background: #5a7a60; }
+      40% { transform: translateY(-6px); background: #16C47F; }
+    }
+
+    .chat-input-area {
+      display: flex; gap: 8px; padding: 12px 16px 16px;
+      border-top: 1px solid rgba(22,196,127,0.08); flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1; background: #132016; border: 1px solid rgba(22,196,127,0.15);
+      border-radius: 14px; padding: 10px 16px; font-size: 13px; color: #d4ecd9;
+      outline: none; transition: border-color .2s; font-family: inherit;
+    }
+    #chat-input:focus { border-color: #16C47F; }
+    #chat-input::placeholder { color: #5a7a60; }
+    #chat-send {
+      width: 42px; height: 42px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, #16C47F, #12A86B); color: #080f0a;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px;
+      transition: transform .2s, box-shadow .2s; flex-shrink: 0;
+    }
+    #chat-send:hover { transform: scale(1.05); box-shadow: 0 2px 16px rgba(22,196,127,0.35); }
+    #chat-send:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .fallback-note { font-size: 11px; color: #5a7a60; margin-top: 6px; font-style: italic; }
+
+    @media (max-width: 640px) {
+      #chat-popup {
+        right: 12px; bottom: 88px; width: calc(100vw - 24px); height: calc(100vh - 110px);
+        border-radius: 16px; max-height: none;
+      }
+      #chat-fab { bottom: 20px; right: 20px; width: 52px; height: 52px; }
+      #chat-fab i { font-size: 20px; }
+      .chat-header { padding: 14px 16px; }
+      #chat-messages { padding: 12px 16px; }
+      .msg { max-width: 92%; }
+      .chat-input-area { padding: 10px 12px 14px; }
+    }
   </style>
 </head>
 <body>
@@ -1402,6 +1552,154 @@ function sendWA() {
   const url = `https://wa.me/6287774487198?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 }
+
+// ── AI Chatbot ──
+const DEFAULT_GREETINGS = [
+  'Halo! Saya <b>Gdronic AI</b>, asisten pintar untuk sistem hidroponik kamu.',
+  'Tanya apa saja seputar hidroponik, nutrisi tanaman, atau fitur Gdronic!',
+  'Sedang menggali ilmu soal IoT dan smart farming? Yuk diskusi!',
+];
+
+let chatOpen = false;
+let chatHistory = [];
+
+function toggleChat() {
+  const popup = document.getElementById('chat-popup');
+  const fab = document.getElementById('chat-fab');
+  chatOpen = !chatOpen;
+  popup.classList.toggle('open', chatOpen);
+  fab.classList.remove('pulse');
+  if (chatOpen) {
+    document.getElementById('chat-input').focus();
+    if (document.querySelectorAll('#chat-messages .msg').length === 0) {
+      showDefaultMessages();
+    }
+  }
+}
+
+function showDefaultMessages() {
+  const container = document.getElementById('chat-messages');
+  const msg = document.createElement('div');
+  msg.className = 'msg ai';
+  msg.innerHTML = '<div class="msg-avatar ai">G</div><div class="msg-bubble">' + DEFAULT_GREETINGS.map(g => '<p>' + g + '</p>').join('') + '<div class="fallback-note">Gdronic AI — Smart Hydroponic</div></div>';
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addMessage(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const avatar = role === 'ai' ? 'G' : 'U';
+  const content = text.startsWith('<') ? text : '<p>' + text + '</p>';
+  div.innerHTML = '<div class="msg-avatar ' + role + '">' + avatar + '</div><div class="msg-bubble">' + content + '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  const plain = div.textContent;
+  if (role === 'user') {
+    chatHistory.push({ role: 'user', content: plain });
+  } else {
+    chatHistory.push({ role: 'assistant', content: plain });
+  }
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-msg';
+  div.innerHTML = '<div class="msg-avatar ai">G</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-msg');
+  if (el) el.remove();
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  document.getElementById('chat-send').disabled = true;
+
+  addMessage('user', escapeHtml(text));
+  showTyping();
+
+  fetch('{{ route('ai.chat') }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+    body: JSON.stringify({ message: text, history: chatHistory.slice(-20) })
+  })
+  .then(r => r.json())
+  .then(data => {
+    hideTyping();
+    if (data.success && data.message) {
+      addMessage('ai', renderMarkdown(data.message));
+    } else {
+      addMessage('ai', '<p>Maaf, terjadi kesalahan. Silakan coba lagi.</p>');
+    }
+  })
+  .catch(() => {
+    hideTyping();
+    addMessage('ai', '<p>Maaf, terjadi kesalahan jaringan. Silakan coba lagi.</p>');
+  })
+  .finally(() => {
+    document.getElementById('chat-send').disabled = false;
+    document.getElementById('chat-input').focus();
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML.replace(/\n/g, '<br>');
+}
+
+function renderMarkdown(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  let html = div.innerHTML;
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-g-lime underline">$1</a>');
+  html = html.replace(/\n{2,}/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  return '<p>' + html + '</p>';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('chat-input');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+});
 </script>
+
+<!-- ═══ AI CHATBOT POPUP HTML ═══ -->
+<button id="chat-fab" class="pulse" onclick="toggleChat()" aria-label="Buka AI Chatbot">
+  <i class="fa-solid fa-robot"></i>
+</button>
+
+<div id="chat-popup">
+  <div class="chat-header">
+    <div class="chat-avatar">G</div>
+    <div class="chat-info">
+      <div class="chat-title">Gdronic AI</div>
+      <div class="chat-status">Online</div>
+    </div>
+    <button id="chat-close" onclick="toggleChat()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="chat-messages"></div>
+  <div class="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Tanya sesuatu tentang hidroponik..." autocomplete="off">
+    <button id="chat-send" onclick="sendMessage()" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
 </body>
 </html>
