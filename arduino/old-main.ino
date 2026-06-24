@@ -9,22 +9,10 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <LiquidCrystal_I2C.h>
-#include <EEPROM.h>
-#include <WebServer.h>
 
-struct ConfigData {
-  uint32_t magic;
-  char ssid[32];
-  char password[64];
-  char url[256];
-  char urlAkt[256];
-};
-#define EEPROM_SIZE sizeof(ConfigData)
-#define MAGIC_NUMBER 0xABCD1234
-#define LONG_PRESS_MS 3000
-
-ConfigData config;
-String url;
+const char* ssid = "z";
+const char* password = "00000000";
+String url = "https://gdronic.cibunarhiap.id/api/batch-log/store";
 unsigned long lastSend = 0;
 const long intervalSend = 3000;
 // =======================
@@ -55,7 +43,7 @@ Adafruit_ADS1115 ads;
 #define ECHO_PIN 18
 #define MAX_DISTANCE 400 // cm
 #define JARAK_KOSONG 22.0
-#define JARAK_PENUH 11x.0
+#define JARAK_PENUH 11.0
 #define TDS_K_VALUE 1.0
 
 NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -86,14 +74,12 @@ DallasTemperature sensors(&oneWire);
 // =======================
 #define BUTTON_RESET_PIN 35
 unsigned long lastButtonCheck = 0;
-unsigned long buttonPressStart = 0;
-bool buttonWasPressed = false;
-const long intervalButton = 50;
+const long intervalButton = 100;
 
 unsigned long lastAktuator = 0;
 const long intervalAktuator = 2000;
 bool statusOutput = false;
-String urlAktuator;
+String urlAktuator = "https://gdronic.cibunarhiap.id/api/aktuator/status";
 
 // =======================
 // TIMER
@@ -128,7 +114,7 @@ void connectWiFi() {
   lcd.print("Connecting...");
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(config.ssid, config.password);
+  WiFi.begin(ssid, password);
 
   Serial.print("Connecting to WiFi");
 
@@ -155,13 +141,13 @@ void connectWiFi() {
     delay(3000);
   } else {
     Serial.println("\nFailed to connect!");
+
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("WiFi Failed");
-    lcd.setCursor(0, 1);
-    lcd.print("Entering AP Mode");
-    delay(2000);
-    enterAPMode();
+
+    delay(3000);
+    ESP.restart();
   }
 }
 
@@ -330,85 +316,6 @@ void kirimDataAPI(float suhuAir,
 }
 
 // =======================
-// EEPROM CONFIG
-// =======================
-void saveConfig() {
-  EEPROM.put(0, config);
-  EEPROM.commit();
-}
-
-void loadConfig() {
-  EEPROM.get(0, config);
-  if (config.magic != MAGIC_NUMBER) {
-    config.magic = MAGIC_NUMBER;
-    strlcpy(config.ssid, "z", sizeof(config.ssid));
-    strlcpy(config.password, "00000000", sizeof(config.password));
-    strlcpy(config.url, "https://gdronic.cibunarhiap.id/api/batch-log/store", sizeof(config.url));
-    strlcpy(config.urlAkt, "https://gdronic.cibunarhiap.id/api/aktuator/status", sizeof(config.urlAkt));
-    saveConfig();
-  }
-}
-
-WebServer server(80);
-
-void handleRoot() {
-  String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>";
-  html += "<style>body{font-family:sans-serif;padding:20px;max-width:400px;margin:auto}";
-  html += "input{width:100%;padding:8px;margin:8px 0;box-sizing:border-box}";
-  html += "input[type=submit]{background:#4CAF50;color:#fff;border:0;padding:10px;cursor:pointer}</style>";
-  html += "</head><body><h2>Smart Hydroponic Config</h2>";
-  html += "<form action='/save' method='POST'>";
-  html += "SSID:<br><input type='text' name='ssid' value='" + String(config.ssid) + "'><br>";
-  html += "Password:<br><input type='password' name='password' value='" + String(config.password) + "'><br>";
-  html += "URL API:<br><input type='url' name='url' value='" + String(config.url) + "'><br>";
-  html += "URL Aktuator:<br><input type='url' name='urlAkt' value='" + String(config.urlAkt) + "'><br>";
-  html += "<input type='submit' value='Save & Restart'>";
-  html += "</form></body></html>";
-  server.send(200, "text/html", html);
-}
-
-void handleSave() {
-  strlcpy(config.ssid, server.arg("ssid").c_str(), sizeof(config.ssid));
-  strlcpy(config.password, server.arg("password").c_str(), sizeof(config.password));
-  strlcpy(config.url, server.arg("url").c_str(), sizeof(config.url));
-  strlcpy(config.urlAkt, server.arg("urlAkt").c_str(), sizeof(config.urlAkt));
-  config.magic = MAGIC_NUMBER;
-  saveConfig();
-
-  String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>";
-  html += "<style>body{font-family:sans-serif;padding:20px;text-align:center}</style>";
-  html += "</head><body><h2>Saved!</h2><p>Restarting...</p></body></html>";
-  server.send(200, "text/html", html);
-  delay(1000);
-  ESP.restart();
-}
-
-void enterAPMode() {
-  WiFi.mode(WIFI_AP);
-  WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255,255,255,0));
-  WiFi.softAP("Smart-Hydroponic");
-
-  server.on("/", handleRoot);
-  server.on("/save", HTTP_POST, handleSave);
-  server.begin();
-
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("AP: Smart-Hydroponic");
-  lcd.setCursor(0, 1);
-  lcd.print("IP: 192.168.4.1");
-
-  Serial.println("===== AP CONFIG MODE =====");
-  Serial.println("SSID: Smart-Hydroponic");
-  Serial.println("IP  : 192.168.4.1");
-
-  while (true) {
-    server.handleClient();
-    delay(10);
-  }
-}
-
-// =======================
 // SETUP
 // =======================
 void setup() {
@@ -419,29 +326,11 @@ void setup() {
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("System Starting...");
-
-  pinMode(BUTTON_RESET_PIN, INPUT);
-
-  // EEPROM
-  EEPROM.begin(EEPROM_SIZE);
-  loadConfig();
-  url = String(config.url);
-  urlAktuator = String(config.urlAkt);
-
-  // Button check at boot → AP config mode
-  if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
-    delay(100);
-    if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
-      lcd.clear();
-      lcd.print("AP Config Mode");
-      delay(1000);
-      enterAPMode();
-    }
-  }
-
+  
   pinMode(SSR_PIN, OUTPUT);
   pinMode(MOTOR1_PIN, OUTPUT);
   pinMode(MOTOR2_PIN, OUTPUT);
+  pinMode(BUTTON_RESET_PIN, INPUT);
 
   // Kondisi awal mati
   digitalWrite(SSR_PIN, LOW);
@@ -581,26 +470,10 @@ void loop() {
   // =======================
   if (millis() - lastButtonCheck >= intervalButton) {
     lastButtonCheck = millis();
-    bool btnState = digitalRead(BUTTON_RESET_PIN) == HIGH;
-
-    if (btnState && !buttonWasPressed) {
-      buttonPressStart = millis();
-      buttonWasPressed = true;
-    }
-
-    if (!btnState && buttonWasPressed) {
-      unsigned long pressDuration = millis() - buttonPressStart;
-      buttonWasPressed = false;
-
-      if (pressDuration >= LONG_PRESS_MS) {
-        Serial.println("Long press - entering AP config mode...");
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("AP Config Mode");
-        delay(1000);
-        enterAPMode();
-      } else {
-        Serial.println("Short press - restarting...");
+    if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
+      delay(50);
+      if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
+        Serial.println("Reset button pressed - restarting...");
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("Manual Reset...");
