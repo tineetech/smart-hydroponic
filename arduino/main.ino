@@ -292,7 +292,7 @@ void kirimDataAPI(float suhuAir,
 
   JsonObject hcNilai = hc["nilai"].to<JsonObject>();
   // hcNilai["level"] = 32;
-  hcNilai["level"] = levelAir;
+  hcNilai["level"] = (int)levelAir;
   hcNilai["jarak_cm"] = jarak;
 
   hc["kualitas_data"] = "normal";

@@ -1013,7 +1013,7 @@
                     }
                     if (nilai.suhu !== undefined) setField(id, 'suhu', fmt1(nilai.suhu));
                     if (nilai.kelembapan !== undefined) setField(id, 'kelembapan', fmt1(nilai.kelembapan));
-                    if (nilai.level !== undefined) setField(id, 'level', nilai.level);
+                    if (nilai.level !== undefined) setField(id, 'level', Math.round(nilai.level));
                     if (nilai.jarak_cm !== undefined) setField(id, 'jarak_cm', nilai.jarak_cm);
                     if (nilai.ph !== undefined) setField(id, 'ph', fmt1(nilai.ph));
                     if (nilai.tds !== undefined) setField(id, 'tds', nilai.tds);
