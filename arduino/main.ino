@@ -1,7 +1,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <WiFiManager.h>
+
 #include <NewPing.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
@@ -55,7 +55,7 @@ Adafruit_ADS1115 ads;
 #define ECHO_PIN 18
 #define MAX_DISTANCE 400 // cm
 #define JARAK_KOSONG 22.0
-#define JARAK_PENUH 11x.0
+#define JARAK_PENUH 11.0
 #define TDS_K_VALUE 1.0
 
 NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -98,9 +98,15 @@ String urlAktuator;
 // =======================
 // TIMER
 // =======================
+unsigned long lastADC = 0;
+unsigned long lastUltrasonik = 0;
+unsigned long lastSerial = 0;
 unsigned long lastDHT = 0;
 unsigned long lastDS18B20 = 0;
 
+const long intervalADC = 500;
+const long intervalUltrasonik = 1000;
+const long intervalSerial = 2000;
 const long intervalDHT = 2000;
 const long intervalDS = 2000;
 
@@ -115,6 +121,9 @@ float phValue = 0;
 float tdsVoltage = 0;
 float tdsValue = 0;
 float ecValue = 0;
+float jarak = 0;
+float levelAir = 0;
+float phValueFiltered = 7.0;
 
 int16_t phRaw = 0;
 int16_t tdsRaw = 0;
@@ -173,6 +182,7 @@ void bacaAktuator() {
 
   HTTPClient http;
   http.begin(urlAktuator);
+  http.setTimeout(5000);
 
   int httpCode = http.GET();
 
@@ -248,8 +258,8 @@ void kirimDataAPI(float suhuAir,
   }
 
   HTTPClient http;
-
   http.begin(url);
+  http.setTimeout(5000);
 
   http.addHeader("Content-Type", "application/json");
 
@@ -271,8 +281,8 @@ void kirimDataAPI(float suhuAir,
   JsonObject dht = sensorData["DHT22 Suhu Udara"].to<JsonObject>();
 
   JsonObject dhtNilai = dht["nilai"].to<JsonObject>();
-  dhtNilai["suhu"] = suhuUdara;
-  dhtNilai["kelembapan"] = kelembaban;
+  dhtNilai["suhu"] = round(suhuUdara * 10.0) / 10.0;
+  dhtNilai["kelembapan"] = round(kelembaban * 10.0) / 10.0;
 
   dht["kualitas_data"] = "normal";
   dht["sudah_diproses"] = true;
@@ -290,7 +300,7 @@ void kirimDataAPI(float suhuAir,
 
   // pH
   JsonObject phObj = sensorData["Probe pH Larutan"].to<JsonObject>();
-  phObj["nilai"] = ph;
+  phObj["nilai"] = round(ph * 10.0) / 10.0;
   phObj["kualitas_data"] = "normal";
   phObj["sudah_diproses"] = true;
 
@@ -300,7 +310,7 @@ void kirimDataAPI(float suhuAir,
   JsonObject tdsNilai = tdsObj["nilai"].to<JsonObject>();
   float ecCalc = tds / 500.0;
   tdsNilai["tds"] = (int)tds;
-  tdsNilai["ec"] = ecCalc;
+  tdsNilai["ec"] = round(ecCalc * 10000.0) / 10000.0;
 
   tdsObj["kualitas_data"] = "normal";
   tdsObj["sudah_diproses"] = true;
@@ -469,10 +479,6 @@ void setup() {
   // DS18B20
   sensors.begin();
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Semua Sensor OK");
-  delay(2000);
 }
 
 // =======================
@@ -494,32 +500,43 @@ float bacaJarak() {
 void loop() {
 
   // =======================
-  // ADS1115
+  // ADS1115 (setiap 500ms)
   // A0 = PH
   // A1 = TDS
   // =======================
-  tdsRaw = ads.readADC_SingleEnded(1);
-  tdsVoltage = ads.computeVolts(tdsRaw);
-  tdsValue = (133.42 * pow(tdsVoltage, 3) - 255.86 * pow(tdsVoltage, 2) + 857.39 * tdsVoltage) * TDS_K_VALUE;
-  ecValue = tdsValue / 500.0;
+  if (millis() - lastADC >= intervalADC) {
+    lastADC = millis();
 
-  phRaw = ads.readADC_SingleEnded(0);
-  phVoltage = ads.computeVolts(phRaw);
-  phValue = 3.5 * phVoltage;
-  if (phValue < 0.0) phValue = 0.0;
-  if (phValue > 14.0) phValue = 14.0;
+    tdsRaw = ads.readADC_SingleEnded(1);
+    tdsVoltage = ads.computeVolts(tdsRaw);
+    tdsValue = (133.42 * pow(tdsVoltage, 3) - 255.86 * pow(tdsVoltage, 2) + 857.39 * tdsVoltage) * TDS_K_VALUE;
+    ecValue = tdsValue / 500.0;
 
-  // =======================
-  // ULTRASONIK
-  // =======================
-  float jarak = bacaJarak();
-  if (jarak < 0) jarak = 0;
-  float levelAir = ((JARAK_KOSONG - jarak) / (JARAK_KOSONG - JARAK_PENUH)) * 100.0;
-  if (levelAir < 0.0) levelAir = 0.0;
-  if (levelAir > 100.0) levelAir = 100.0;
+    phRaw = ads.readADC_SingleEnded(0);
+    phVoltage = ads.computeVolts(phRaw);
+    phValue = 3.5 * phVoltage;
+    if (phValue < 0.0) phValue = 0.0;
+    if (phValue > 9.0) phValue = 9.0;
+
+    // Exponential moving average to dampen noise
+    phValueFiltered += 0.3 * (phValue - phValueFiltered);
+  }
 
   // =======================
-  // DHT22
+  // ULTRASONIK (setiap 1000ms)
+  // =======================
+  if (millis() - lastUltrasonik >= intervalUltrasonik) {
+    lastUltrasonik = millis();
+
+    jarak = bacaJarak();
+    if (jarak < 0) jarak = 0;
+    levelAir = ((JARAK_KOSONG - jarak) / (JARAK_KOSONG - JARAK_PENUH)) * 100.0;
+    if (levelAir < 0.0) levelAir = 0.0;
+    if (levelAir > 100.0) levelAir = 100.0;
+  }
+
+  // =======================
+  // DHT22 (setiap 2000ms)
   // =======================
   if (millis() - lastDHT >= intervalDHT) {
     lastDHT = millis();
@@ -548,6 +565,47 @@ void loop() {
     }
   }
 
+  // =======================
+  // LCD 20x4 (setiap 500ms) - update sebelum kirim API
+  // =======================
+  if (millis() - lastLCD >= intervalLCD) {
+    lastLCD = millis();
+
+    char buf[21];
+
+    // Baris 1 — all 20 chars exactly
+    snprintf(buf, sizeof(buf), "pH: %4.1f   TDS:%4d ", phValueFiltered, (int)tdsValue);
+    lcd.setCursor(0, 0);
+    lcd.print(buf);
+
+    // Baris 2
+    snprintf(buf, sizeof(buf), "TA: %4.1fC   RH:%3d%% ", suhuUdara, (int)kelembaban);
+    lcd.setCursor(0, 1);
+    lcd.print(buf);
+
+    // Baris 3
+    snprintf(buf, sizeof(buf), "TW: %4.1fC   LV:%3.0f%%", suhuAir, levelAir);
+    lcd.setCursor(0, 2);
+    lcd.print(buf);
+
+    // Ganti tulisan bawah setiap 3 detik
+    if (millis() - lastTextChange >= intervalText) {
+      lastTextChange = millis();
+      textIndex++;
+      if (textIndex >= 3) textIndex = 0;
+    }
+
+    // Baris 4 (center) - pad with spaces to clear old chars
+    char buf2[21];
+    int centerPos = (20 - statusText[textIndex].length()) / 2;
+    snprintf(buf2, sizeof(buf2), "%*s%-*s", centerPos, "", 20 - centerPos, statusText[textIndex].c_str());
+    lcd.setCursor(0, 3);
+    lcd.print(buf2);
+  }
+
+  // =======================
+  // KIRIM DATA API (setiap 3000ms)
+  // =======================
   if (millis() - lastSend >= intervalSend) {
     lastSend = millis();
 
@@ -557,7 +615,7 @@ void loop() {
       kelembaban,
       jarak,
       levelAir,
-      phValue,
+      phValueFiltered,
       tdsValue
     );
 
@@ -611,99 +669,48 @@ void loop() {
   }
 
   // =======================
-  // SERIAL MONITOR
+  // SERIAL MONITOR (setiap 2000ms)
   // =======================
-  Serial.println("===== DATA SENSOR =====");
+  if (millis() - lastSerial >= intervalSerial) {
+    lastSerial = millis();
 
-  Serial.print("pH Raw      : ");
-  Serial.println(phRaw);
+    Serial.println("===== DATA SENSOR =====");
 
-  Serial.print("pH Voltage  : ");
-  Serial.print(phVoltage, 3);
-  Serial.println(" V");
+    Serial.print("pH Raw      : ");
+    Serial.println(phRaw);
 
-  Serial.print("TDS Raw     : ");
-  Serial.println(tdsRaw);
+    Serial.print("pH Voltage  : ");
+    Serial.print(phVoltage, 3);
+    Serial.println(" V");
 
-  Serial.print("TDS Voltage : ");
-  Serial.print(tdsVoltage, 3);
-  Serial.println(" V");
+    Serial.print("TDS Raw     : ");
+    Serial.println(tdsRaw);
 
-  Serial.print("Jarak       : ");
-  Serial.print(jarak);
-  Serial.println(" cm");
+    Serial.print("TDS Voltage : ");
+    Serial.print(tdsVoltage, 3);
+    Serial.println(" V");
 
-  Serial.print("Suhu Udara  : ");
-  Serial.print(suhuUdara);
-  Serial.println(" C");
+    Serial.print("Jarak       : ");
+    Serial.print(jarak);
+    Serial.println(" cm");
 
-  Serial.print("Kelembaban  : ");
-  Serial.print(kelembaban);
-  Serial.println(" %");
+    Serial.print("Suhu Udara  : ");
+    Serial.print(suhuUdara);
+    Serial.println(" C");
 
-  Serial.print("Suhu Air    : ");
-  Serial.print(suhuAir);
-  Serial.println(" C");
+    Serial.print("Kelembaban  : ");
+    Serial.print(kelembaban);
+    Serial.println(" %");
 
-  Serial.print("Level Air   : ");
-  Serial.print(levelAir, 1);
-  Serial.println(" %");
+    Serial.print("Suhu Air    : ");
+    Serial.print(suhuAir);
+    Serial.println(" C");
 
-  Serial.println("=======================\n");
+    Serial.print("Level Air   : ");
+    Serial.print(levelAir, 1);
+    Serial.println(" %");
 
-  if (millis() - lastLCD >= intervalLCD) {
-    lastLCD = millis();
-    // =======================
-    // LCD 20x4
-    // =======================
-    lcd.clear();
-
-    // Baris 1
-    lcd.setCursor(0, 0);
-    lcd.print("pH : ");
-    lcd.print(phValue, 1);
-
-    lcd.setCursor(11, 0);
-    lcd.print("TDS:");
-    lcd.print((int)tdsValue);
-
-    // Baris 2
-    lcd.setCursor(0, 1);
-    lcd.print("TA : ");
-    lcd.print(suhuUdara, 1);
-    lcd.print(" C");
-
-    lcd.setCursor(11, 1);
-    lcd.print("RH : ");
-    lcd.print((int)kelembaban);
-    lcd.print("%");
-
-    // Baris 3
-    lcd.setCursor(0, 2);
-    lcd.print("TW : ");
-    lcd.print(suhuAir, 1);
-    lcd.print(" C");
-
-    lcd.setCursor(11, 2);
-    lcd.print("LV : ");
-    lcd.print(levelAir, 0);
-    lcd.print("%");
-
-    // Ganti tulisan bawah setiap 3 detik
-    if (millis() - lastTextChange >= intervalText) {
-      lastTextChange = millis();
-      textIndex++;
-
-      if (textIndex >= 3) {
-        textIndex = 0;
-      }
-    }
-
-    // Baris 4 (center)
-    String line4 = statusText[textIndex];
-    int centerPos = (20 - line4.length()) / 2;
-
-    lcd.setCursor(centerPos, 3);
-    lcd.print(line4);
+    Serial.println("=======================\n");
   }
+
 }

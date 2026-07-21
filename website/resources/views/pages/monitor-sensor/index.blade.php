@@ -200,7 +200,7 @@
                                 <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:16px;">
                                     <div style="font-size:48px;font-weight:800;color:#E8F0E8;line-height:1;"
                                         data-sensor="{{ $sensor->id }}" data-field="suhu_air">
-                                        {{ $nilai['suhu_air'] }}</div>
+                                        {{ number_format((float)$nilai['suhu_air'], 1) }}</div>
                                     <div
                                         style="font-size:20px;color:{{ $warna['hex'] }};font-weight:600;margin-bottom:6px;">
                                         °C</div>
@@ -214,7 +214,7 @@
                                             SUHU</div>
                                         <div style="font-size:28px;font-weight:800;color:#E8F0E8;line-height:1;">
                                             <span data-sensor="{{ $sensor->id }}"
-                                                data-field="suhu">{{ $nilai['suhu'] }}</span><span
+                                                data-field="suhu">{{ number_format((float)$nilai['suhu'], 1) }}</span><span
                                                 style="font-size:13px;color:{{ $warna['hex'] }};">°C</span>
                                         </div>
                                     </div>
@@ -223,7 +223,7 @@
                                             KELEMBAPAN</div>
                                         <div style="font-size:28px;font-weight:800;color:#E8F0E8;line-height:1;">
                                             <span data-sensor="{{ $sensor->id }}"
-                                                data-field="kelembapan">{{ $nilai['kelembapan'] }}</span><span
+                                                data-field="kelembapan">{{ number_format((float)$nilai['kelembapan'], 1) }}</span><span
                                                 style="font-size:13px;color:#4AF0C8;">%</span>
                                         </div>
                                     </div>
@@ -256,7 +256,7 @@
                             @elseif(isset($nilai['ph']))
                                 <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:16px;">
                                     <div style="font-size:48px;font-weight:800;color:#E8F0E8;line-height:1;"
-                                        data-sensor="{{ $sensor->id }}" data-field="ph">{{ $nilai['ph'] }}
+                                        data-sensor="{{ $sensor->id }}" data-field="ph">{{ number_format((float)$nilai['ph'], 1) }}
                                     </div>
                                     <div
                                         style="font-size:20px;color:{{ $warna['hex'] }};font-weight:600;margin-bottom:6px;">
@@ -280,7 +280,7 @@
                                             EC</div>
                                         <div style="font-size:28px;font-weight:800;color:#E8F0E8;line-height:1;">
                                             <span data-sensor="{{ $sensor->id }}"
-                                                data-field="ec">{{ $nilai['ec'] ?? '-' }}</span><span
+                                                data-field="ec">{{ number_format((float)($nilai['ec'] ?? 0), 4) }}</span><span
                                                 style="font-size:12px;color:{{ $warna['hex'] }};">mS</span>
                                         </div>
                                     </div>
