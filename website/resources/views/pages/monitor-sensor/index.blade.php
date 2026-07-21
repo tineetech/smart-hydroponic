@@ -1003,18 +1003,21 @@
                     if (!log) return;
                     const nilai = log.nilai;
 
-                    // Nilai per tipe sensor
+                    // Nilai per tipe sensor — format angka
+                    const fmt1 = v => parseFloat(v).toFixed(1);
+                    const fmt4 = v => parseFloat(v).toFixed(4);
+
                     if (nilai.suhu_air !== undefined) {
                         flashValue(id, 'suhu_air');
-                        setField(id, 'suhu_air', nilai.suhu_air);
+                        setField(id, 'suhu_air', fmt1(nilai.suhu_air));
                     }
-                    if (nilai.suhu !== undefined) setField(id, 'suhu', nilai.suhu);
-                    if (nilai.kelembapan !== undefined) setField(id, 'kelembapan', nilai.kelembapan);
+                    if (nilai.suhu !== undefined) setField(id, 'suhu', fmt1(nilai.suhu));
+                    if (nilai.kelembapan !== undefined) setField(id, 'kelembapan', fmt1(nilai.kelembapan));
                     if (nilai.level !== undefined) setField(id, 'level', nilai.level);
                     if (nilai.jarak_cm !== undefined) setField(id, 'jarak_cm', nilai.jarak_cm);
-                    if (nilai.ph !== undefined) setField(id, 'ph', nilai.ph);
+                    if (nilai.ph !== undefined) setField(id, 'ph', fmt1(nilai.ph));
                     if (nilai.tds !== undefined) setField(id, 'tds', nilai.tds);
-                    if (nilai.ec !== undefined) setField(id, 'ec', nilai.ec);
+                    if (nilai.ec !== undefined) setField(id, 'ec', fmt4(nilai.ec));
 
                     // Badge status
                     const badge = BADGE[log.kualitas] ?? {
