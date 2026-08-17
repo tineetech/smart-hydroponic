@@ -1,6 +1,112 @@
 @extends('layouts.admin')
 
 
+@section('styles')
+    <style>
+        .durasi-stepper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #131613;
+            border: 1px solid #1E2C1E;
+            border-radius: 8px;
+            padding: 3px 5px;
+        }
+
+        .durasi-btn {
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1E2C1E;
+            color: #7A9A7A;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+            user-select: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .durasi-btn:hover {
+            background: #2A3A2A;
+            color: #16C47F;
+        }
+
+        .durasi-btn:active {
+            transform: scale(0.92);
+        }
+
+        .durasi-input {
+            width: 42px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: #E8F0E8;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+
+        .durasi-input::-webkit-outer-spin-button,
+        .durasi-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .actuator-feedback {
+            border-radius: 8px;
+            font-size: 11px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .af-loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4A8AF0;
+        }
+
+        .af-spinner {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #4A8AF033;
+            border-top-color: #4A8AF0;
+            animation: af-spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes af-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .af-success {
+            color: #16C47F;
+            background: #16C47F14;
+            border: 1px solid #16C47F33;
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .af-warning {
+            color: #F0A84A;
+            background: #F0A84A14;
+            border: 1px solid #F0A84A33;
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+    </style>
+@endsection
+
+
 @section('content')
     <!-- HEADER -->
     <header id="header">
@@ -194,13 +300,34 @@
                                     </div>
                                 </div>
 
-                                {{-- Toggle Switch --}}
-                                <label class="toggle-wrap">
-                                    <input type="checkbox" class="actuator-toggle-input"
-                                        data-aktuator="{{ $aktuator->id }}" {{ $isOn ? 'checked' : '' }}
-                                        onchange="handleToggle({{ $aktuator->id }}, this)">
-                                    <span class="toggle-slider"></span>
-                                </label>
+                                {{-- Durasi nyala (detik) stepper + Toggle Switch --}}
+                                <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                                    <div class="durasi-stepper" title="Durasi nyala (detik)">
+                                        <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, -1)">−</span>
+                                        <input type="number" class="durasi-input" data-aktuator="{{ $aktuator->id }}"
+                                            value="3" min="1" max="3600" step="1" inputmode="numeric"
+                                            aria-label="Durasi nyala (detik)">
+                                        <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, 1)">+</span>
+                                        <span style="font-size:9px;color:#4D5E4D;">dtk</span>
+                                    </div>
+                                    <label class="toggle-wrap">
+                                        <input type="checkbox" class="actuator-toggle-input"
+                                            data-aktuator="{{ $aktuator->id }}" {{ $isOn ? 'checked' : '' }}
+                                            onchange="handleToggle({{ $aktuator->id }}, this)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {{-- Feedback: menunggu respon IoT / sukses / gagal --}}
+                            <div id="actuator-feedback-{{ $aktuator->id }}" class="actuator-feedback"
+                                style="display:none;">
+                                <div class="af-loading">
+                                    <span class="af-spinner"></span>
+                                    <span>Menunggu respon sistem IoT...</span>
+                                </div>
+                                <div class="af-success" style="display:none;"></div>
+                                <div class="af-warning" style="display:none;"></div>
                             </div>
 
                             {{-- Status besar --}}
@@ -760,6 +887,88 @@
         // ══════════════════════════════════════════════════════════════════════
         const pendingAktuator = new Set(); // id aktuator yg sedang proses toggle
 
+        // ── Durasi nyala (detik): stepper − / + ──────────────────────────────
+        const DURASI_MIN = 1;
+        const DURASI_MAX = 3600;
+        const DURASI_DEFAULT = 3;
+
+        function changeDurasi(aktuatorId, delta) {
+            const input = document.querySelector(`.durasi-input[data-aktuator="${aktuatorId}"]`);
+            if (!input) return;
+            let val = parseInt(input.value, 10);
+            if (isNaN(val) || val < DURASI_MIN) val = DURASI_DEFAULT;
+            val += delta;
+            val = Math.min(Math.max(val, DURASI_MIN), DURASI_MAX);
+            input.value = val;
+        }
+
+        function getDurasi(aktuatorId) {
+            const input = document.querySelector(`.durasi-input[data-aktuator="${aktuatorId}"]`);
+            let val = parseInt(input?.value ?? '', 10);
+            if (isNaN(val) || val < DURASI_MIN) val = DURASI_DEFAULT;
+            return Math.min(val, DURASI_MAX);
+        }
+
+        // ── Alur tunggu konfirmasi OFF dari sistem IoT setelah perintah ON ──
+        const iotPending = new Set();  // id aktuator yang menunggu respon IoT
+        const iotTimers = {};          // timer timeout per aktuator
+        const IOT_WAIT_TIMEOUT_MS = 30000;
+
+        function showActuatorFeedback(id, mode, msg) {
+            const fb = document.getElementById('actuator-feedback-' + id);
+            if (!fb) return;
+            const loading = fb.querySelector('.af-loading');
+            const success = fb.querySelector('.af-success');
+            const warning = fb.querySelector('.af-warning');
+            fb.style.display = 'block';
+            loading.style.display = 'none';
+            success.style.display = 'none';
+            warning.style.display = 'none';
+            if (mode === 'loading') {
+                loading.style.display = 'flex';
+            } else if (mode === 'success') {
+                success.style.display = 'block';
+                success.textContent = msg;
+            } else if (mode === 'warning') {
+                warning.style.display = 'block';
+                warning.textContent = msg;
+            } else {
+                fb.style.display = 'none';
+            }
+        }
+
+        function disableActuatorSwitch(id) {
+            const checkbox = document.querySelector(`.actuator-toggle-input[data-aktuator="${id}"]`);
+            if (checkbox) checkbox.disabled = true;
+        }
+
+        function enableActuatorSwitch(id) {
+            const checkbox = document.querySelector(`.actuator-toggle-input[data-aktuator="${id}"]`);
+            if (checkbox) checkbox.disabled = false;
+        }
+
+        function finishIotWait(id, durasi) {
+            if (!iotPending.has(id)) return;
+            iotPending.delete(id);
+            clearTimeout(iotTimers[id]);
+            delete iotTimers[id];
+            const d = durasi ?? DURASI_DEFAULT;
+            showActuatorFeedback(id, 'success',
+                `Berhasil menghubungi sistem IoT — aktuator menyala selama ${d} detik dan kembali OFF.`);
+            enableActuatorSwitch(id);
+            setTimeout(() => showActuatorFeedback(id, null), 6000);
+        }
+
+        function abortIotWait(id, msg) {
+            if (iotPending.has(id)) {
+                iotPending.delete(id);
+                clearTimeout(iotTimers[id]);
+                delete iotTimers[id];
+            }
+            showActuatorFeedback(id, 'warning', msg || 'Perintah gagal dikirim. Coba lagi.');
+            enableActuatorSwitch(id);
+        }
+
         function handleToggle(aktuatorId, checkboxEl) {
             const status = checkboxEl.checked ? 'on' : 'off';
             sendToggle(aktuatorId, status, null, checkboxEl);
@@ -791,6 +1000,7 @@
             const id = String(aktuatorId);
             const isOn = status === 'on';
             const card = document.getElementById('actuator-card-' + id);
+            const durasi = isOn ? getDurasi(aktuatorId) : null;
 
             // ── 1. OPTIMISTIC UPDATE: langsung render perubahan di UI ──────────
             pendingAktuator.add(id);
@@ -806,6 +1016,16 @@
                 skipChart: true
             });
 
+            // ── Alur ON: kunci switch + loading tunggu respon sistem IoT ──────
+            if (isOn) {
+                disableActuatorSwitch(id);
+                showActuatorFeedback(id, 'loading', 'Menunggu respon sistem IoT...');
+                iotPending.add(id);
+                iotTimers[id] = setTimeout(() => {
+                    abortIotWait(id, 'Tidak ada respon dari sistem IoT. Periksa koneksi perangkat.');
+                }, IOT_WAIT_TIMEOUT_MS);
+            }
+
             try {
                 const res = await fetch(`/admin/aktuator-komponen/${aktuatorId}/toggle`, {
                     method: 'POST',
@@ -816,7 +1036,8 @@
                     },
                     body: JSON.stringify({
                         status,
-                        catatan
+                        catatan,
+                        durasi_detik: durasi,
                     })
                 });
 
@@ -842,7 +1063,11 @@
                 }, {
                     skipCheckbox: true
                 });
-                alert('Gagal mengubah status aktuator. Coba lagi.');
+                if (isOn) {
+                    abortIotWait(id, 'Gagal mengubah status aktuator. Coba lagi.');
+                } else {
+                    alert('Gagal mengubah status aktuator. Coba lagi.');
+                }
             } finally {
                 pendingAktuator.delete(id);
                 if (card) card.classList.remove('pending');
@@ -982,6 +1207,11 @@
                         sumber_perintah: log.sumber_perintah,
                         updated_at: log.updated_at,
                     });
+
+                    // ── Konfirmasi OFF dari sistem IoT setelah perintah ON ──
+                    if (iotPending.has(String(id)) && log.is_on === false) {
+                        finishIotWait(String(id), log.durasi_detik);
+                    }
                 });
 
             } catch (err) {

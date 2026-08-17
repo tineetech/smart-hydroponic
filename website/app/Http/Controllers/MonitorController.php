@@ -278,9 +278,10 @@ class MonitorController extends Controller
     public function toggleAkuator(Request $request, Komponen $komponen)
     {
         $request->validate([
-            'status'    => 'required|in:on,off',
-            'nilai_pwm' => 'nullable|integer|min:0|max:255',
-            'catatan'   => 'nullable|string|max:255',
+            'status'       => 'required|in:on,off',
+            'durasi_detik' => 'nullable|integer|min:1|max:3600',
+            'nilai_pwm'    => 'nullable|integer|min:0|max:255',
+            'catatan'      => 'nullable|string|max:255',
         ]);
 
         if ($komponen->jenis_komponen !== Komponen::JENIS_AKTUATOR) {
@@ -290,10 +291,14 @@ class MonitorController extends Controller
         }
 
         $log = DB::transaction(function () use ($request, $komponen) {
-            // Jika aktuator sebelumnya ON dan sekarang dimatikan,
-            // hitung durasi sejak log ON terakhir.
             $durasi = null;
-            if ($request->status === AktuatorLog::STATUS_OFF) {
+
+            if ($request->status === AktuatorLog::STATUS_ON) {
+                // Durasi nyala (detik) yang diminta user (default 3 detik dari frontend).
+                $durasi = $request->filled('durasi_detik') ? (int) $request->durasi_detik : null;
+            } elseif ($request->status === AktuatorLog::STATUS_OFF) {
+                // Jika aktuator sebelumnya ON dan sekarang dimatikan,
+                // hitung durasi sejak log ON terakhir.
                 $logOnTerakhir = AktuatorLog::where('id_komponen', $komponen->id)
                     ->where('status', AktuatorLog::STATUS_ON)
                     ->latest()
@@ -320,6 +325,7 @@ class MonitorController extends Controller
                 'id'              => $log->id,
                 'status'          => $log->status,
                 'is_on'           => $log->is_on,
+                'durasi_detik'    => $log->durasi_detik,
                 'nilai_pwm'       => $log->nilai_pwm,
                 'sumber_perintah' => $log->sumber_perintah,
                 'updated_at'      => $log->created_at->diffForHumans(),

@@ -26,7 +26,7 @@ struct ConfigData {
 ConfigData config;
 String url;
 unsigned long lastSend = 0;
-const long intervalSend = 3000;
+const long intervalSend = 5000;
 // =======================
 // LCD I2C 20x4
 // =======================
@@ -94,6 +94,20 @@ unsigned long lastAktuator = 0;
 const long intervalAktuator = 2000;
 bool statusOutput = false;
 String urlAktuator;
+
+// =======================
+// KONTROL AKTUATOR (nyala berdasarkan durasi)
+// =======================
+struct AktuatorKontrol {
+  const char* nama;
+  uint8_t pin;
+  bool siklusAktif;       // sedang dalam siklus "nyala selama X detik"
+  unsigned long matiPada; // millis() saat harus dimatikan
+};
+
+AktuatorKontrol aktSSR   = {"SSR Pompa Utama", SSR_PIN,   false, 0};
+AktuatorKontrol aktMotor1 = {"Motor pH Down",  MOTOR1_PIN, false, 0};
+AktuatorKontrol aktMotor2 = {"Motor pH Up",    MOTOR2_PIN, false, 0};
 
 // =======================
 // TIMER
@@ -174,6 +188,101 @@ void connectWiFi() {
   }
 }
 
+void updateAktuatorKontrol() {
+  AktuatorKontrol* daftar[] = { &aktSSR, &aktMotor1, &aktMotor2 };
+
+  for (int i = 0; i < 3; i++) {
+    AktuatorKontrol& a = *daftar[i];
+
+    if (a.siklusAktif && (long)(millis() - a.matiPada) >= 0) {
+      a.siklusAktif = false;
+      a.matiPada = 0;
+      digitalWrite(a.pin, LOW);
+
+      Serial.print("[AKTUATOR] ");
+      Serial.print(a.nama);
+      Serial.println(" dimatikan (durasi selesai)");
+    }
+  }
+}
+
+// Kirim status OFF aktuator ke server (endpoint batch-log/store)
+// agar server tahu perangkat sudah menerima perintah.
+bool kirimStatusOffAktuator(const char* namaKomponen) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[AKTUATOR] WiFi disconnected, gagal kirim OFF");
+    return false;
+  }
+
+  HTTPClient http;
+  http.begin(url);
+  http.setTimeout(1000);
+  http.addHeader("Content-Type", "application/json");
+
+  JsonDocument doc;
+  doc["aktuator"]["data"][namaKomponen] = "off";
+
+  String body;
+  serializeJson(doc, body);
+
+  int httpCode = http.POST(body);
+  http.end();
+
+  bool ok = (httpCode >= 200 && httpCode < 300);
+
+  Serial.print("[AKTUATOR] POST OFF -> ");
+  Serial.print(namaKomponen);
+  Serial.print(" | HTTP ");
+  Serial.println(httpCode);
+
+  return ok;
+}
+
+void nyalakanSelama(AktuatorKontrol& a, unsigned long durasiMs) {
+  a.siklusAktif = true;
+  a.matiPada = millis() + durasiMs;
+  digitalWrite(a.pin, HIGH);
+
+  Serial.print("[AKTUATOR] ");
+  Serial.print(a.nama);
+  Serial.print(" NYALA selama ");
+  Serial.print(durasiMs / 1000);
+  Serial.println(" detik");
+}
+
+// Proses 1 aktuator: berada dalam siklus nyala -> abaikan;
+// status "on" -> kirim OFF dulu, baru nyalakan selama durasi.
+void prosesStatusAktuator(AktuatorKontrol& a, const String& status, const String& durasiStr) {
+  if (a.siklusAktif) {
+    return; // masih dalam siklus nyala, jangan ganggu / trigger ulang
+  }
+
+  if (status.equalsIgnoreCase("on")) {
+    int durasiDetik = durasiStr.toInt();
+    if (durasiDetik < 0) durasiDetik = 0;
+
+    // Sebelum menyalakan, kirim dulu status OFF ke server.
+    if (kirimStatusOffAktuator(a.nama)) {
+      if (durasiDetik > 0) {
+        nyalakanSelama(a, (unsigned long)durasiDetik * 1000UL);
+      } else {
+        a.siklusAktif = false;
+        digitalWrite(a.pin, HIGH);
+        Serial.print("[AKTUATOR] ");
+        Serial.print(a.nama);
+        Serial.println(" NYALA (tanpa durasi)");
+      }
+    } else {
+      digitalWrite(a.pin, LOW);
+      Serial.print("[AKTUATOR] Gagal kirim OFF, ");
+      Serial.print(a.nama);
+      Serial.println(" tidak dinyalakan");
+    }
+  } else {
+    digitalWrite(a.pin, LOW);
+  }
+}
+
 void bacaAktuator() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi disconnected");
@@ -182,7 +291,7 @@ void bacaAktuator() {
 
   HTTPClient http;
   http.begin(urlAktuator);
-  http.setTimeout(5000);
+  http.setTimeout(1000);
 
   int httpCode = http.GET();
 
@@ -199,30 +308,27 @@ void bacaAktuator() {
     if (!error) {
       String ssr =
         doc["aktuator"]["data"]["SSR Pompa Utama"] | "off";
+      String ssrDur =
+        doc["aktuator"]["durasi_detik"]["SSR Pompa Utama"] | "0";
 
       String phDown =
         doc["aktuator"]["data"]["Motor pH Down"] | "off";
+      String phDownDur =
+        doc["aktuator"]["durasi_detik"]["Motor pH Down"] | "0";
 
       String phUp =
         doc["aktuator"]["data"]["Motor pH Up"] | "off";
+      String phUpDur =
+        doc["aktuator"]["durasi_detik"]["Motor pH Up"] | "0";
 
-      // SSR Pompa Utama
-      digitalWrite(
-        SSR_PIN,
-        ssr.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      // SSR Pompa Utama — on + durasi -> kirim OFF dulu, baru nyala
+      prosesStatusAktuator(aktSSR, ssr, ssrDur);
 
       // Motor pH Down
-      digitalWrite(
-        MOTOR1_PIN,
-        phDown.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      prosesStatusAktuator(aktMotor1, phDown, phDownDur);
 
       // Motor pH Up
-      digitalWrite(
-        MOTOR2_PIN,
-        phUp.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      prosesStatusAktuator(aktMotor2, phUp, phUpDur);
 
       Serial.print("SSR       : ");
       Serial.println(ssr);
@@ -259,7 +365,7 @@ void kirimDataAPI(float suhuAir,
 
   HTTPClient http;
   http.begin(url);
-  http.setTimeout(5000);
+  http.setTimeout(1000);
 
   http.addHeader("Content-Type", "application/json");
 
@@ -353,8 +459,8 @@ void loadConfig() {
     config.magic = MAGIC_NUMBER;
     strlcpy(config.ssid, "z", sizeof(config.ssid));
     strlcpy(config.password, "00000000", sizeof(config.password));
-    strlcpy(config.url, "https://gdronic.cibunarhiap.id/api/batch-log/store", sizeof(config.url));
-    strlcpy(config.urlAkt, "https://gdronic.cibunarhiap.id/api/aktuator/status", sizeof(config.urlAkt));
+    strlcpy(config.url, "https://gdronic.christoperbale.com/api/batch-log/store", sizeof(config.url));
+    strlcpy(config.urlAkt, "https://gdronic.christoperbale.com/api/aktuator/status", sizeof(config.urlAkt));
     saveConfig();
   }
 }
@@ -498,6 +604,11 @@ float bacaJarak() {
 // LOOP
 // =======================
 void loop() {
+
+  // =======================
+  // AKTUATOR TIMER (matikan yang sudah habis durasinya) — tiap iterasi
+  // =======================
+  updateAktuatorKontrol();
 
   // =======================
   // ADS1115 (setiap 500ms)

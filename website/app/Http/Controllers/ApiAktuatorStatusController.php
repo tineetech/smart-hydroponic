@@ -18,6 +18,11 @@ class ApiAktuatorStatusController extends Controller
      *       "SSR Pompa Utama": "on",
      *       "Motor pH Down": "off",
      *       "Motor pH Up": "off"
+     *     },
+     *     "durasi_detik": {
+     *       "SSR Pompa Utama": 3,
+     *       "Motor pH Down": null,
+     *       "Motor pH Up": null
      *     }
      *   }
      * }
@@ -46,16 +51,19 @@ class ApiAktuatorStatusController extends Controller
 
         $logs = $query->get();
 
-        // ── Susun jadi flat: nama_komponen => status ────────────────
+        // ── Susun jadi flat: nama_komponen => status (+ durasi nyala) ──────
         $data = [];
+        $durasi = [];
         foreach ($logs as $log) {
             $namaKomponen = $log->komponen->nama_komponen ?? "komponen#{$log->id_komponen}";
             $data[$namaKomponen] = $log->status;
+            $durasi[$namaKomponen] = $log->durasi_detik;
         }
 
         return response()->json([
             'aktuator' => [
-                'data' => $data,
+                'data'         => $data,
+                'durasi_detik' => $durasi,
             ],
         ], 200);
     }
