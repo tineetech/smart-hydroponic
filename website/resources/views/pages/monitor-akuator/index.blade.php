@@ -911,6 +911,7 @@
 
         // ── Alur tunggu konfirmasi OFF dari sistem IoT setelah perintah ON ──
         const iotPending = new Set();  // id aktuator yang menunggu respon IoT
+        const iotPendingInfo = {};     // id -> durasi nyala yang diminta user
         const iotTimers = {};          // timer timeout per aktuator
         const IOT_WAIT_TIMEOUT_MS = 30000;
 
@@ -952,7 +953,8 @@
             iotPending.delete(id);
             clearTimeout(iotTimers[id]);
             delete iotTimers[id];
-            const d = durasi ?? DURASI_DEFAULT;
+            const d = iotPendingInfo[id] ?? durasi ?? DURASI_DEFAULT;
+            delete iotPendingInfo[id];
             showActuatorFeedback(id, 'success',
                 `Berhasil menghubungi sistem IoT — aktuator menyala selama ${d} detik dan kembali OFF.`);
             enableActuatorSwitch(id);
@@ -965,6 +967,7 @@
                 clearTimeout(iotTimers[id]);
                 delete iotTimers[id];
             }
+            delete iotPendingInfo[id];
             showActuatorFeedback(id, 'warning', msg || 'Perintah gagal dikirim. Coba lagi.');
             enableActuatorSwitch(id);
         }
@@ -1021,6 +1024,7 @@
                 disableActuatorSwitch(id);
                 showActuatorFeedback(id, 'loading', 'Menunggu respon sistem IoT...');
                 iotPending.add(id);
+                iotPendingInfo[id] = durasi ?? DURASI_DEFAULT;
                 iotTimers[id] = setTimeout(() => {
                     abortIotWait(id, 'Tidak ada respon dari sistem IoT. Periksa koneksi perangkat.');
                 }, IOT_WAIT_TIMEOUT_MS);

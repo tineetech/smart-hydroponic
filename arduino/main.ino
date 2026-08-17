@@ -20,7 +20,7 @@ struct ConfigData {
   char urlAkt[256];
 };
 #define EEPROM_SIZE sizeof(ConfigData)
-#define MAGIC_NUMBER 0xABCD1234
+#define MAGIC_NUMBER 0xABCD1235
 #define LONG_PRESS_MS 3000
 
 ConfigData config;
@@ -36,7 +36,7 @@ const long intervalText = 3000;
 unsigned long lastLCD = 0;
 const long intervalLCD = 500;
 byte textIndex = 0;
-
+  
 String statusText[] = {
   "System OK",
   "Gdronic",
