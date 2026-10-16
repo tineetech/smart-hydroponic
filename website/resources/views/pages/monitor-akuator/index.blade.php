@@ -218,6 +218,60 @@
                     <div class="badge-live">LIVE</div>
                 </div>
 
+                {{-- ── SELECT MODE KONEKSI KONTROL AKTUATOR ─────────────────────────────── --}}
+                <div style="background:#131613;border:1px solid #1E2C1E;border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:36px;height:36px;border-radius:10px;background:{{ $connectionMode === 'mqtt' ? '#16C47F18' : '#4A8AF018' }};display:flex;align-items:center;justify-content:center;border:1px solid {{ $connectionMode === 'mqtt' ? '#16C47F33' : '#4A8AF033' }};flex-shrink:0;">
+                            @if ($connectionMode === 'mqtt')
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                    <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" stroke="#16C47F" stroke-width="2" stroke-linecap="round"/>
+                                    <circle cx="5" cy="19" r="1.5" fill="#16C47F"/>
+                                </svg>
+                            @else
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                    <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" stroke="#4A8AF0" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            @endif
+                        </div>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="font-size:13px;font-weight:700;color:#E8F0E8;">Mode Koneksi Kontrol Aktuator</span>
+                                <span id="mqtt-connection-status" style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;{{ $connectionMode === 'mqtt' ? 'background:#F0A84A1A;color:#F0A84A;border:1px solid #F0A84A44;' : 'background:#4A8AF01A;color:#4A8AF0;border:1px solid #4A8AF044;' }}">
+                                    {{ $connectionMode === 'mqtt' ? 'Menghubungkan MQTT...' : 'Mode HTTP (Aktif)' }}
+                                </span>
+                            </div>
+                            <div style="font-size:11px;color:#5A7A5A;margin-top:2px;">
+                                Aktif: <strong style="color:{{ $connectionMode === 'mqtt' ? '#16C47F' : '#4A8AF0' }};">{{ $connectionMode === 'mqtt' ? 'MQTT (Rancangan Baru)' : 'HTTP (Yang Sekarang)' }}</strong>
+                                @if ($connectionMode === 'mqtt')
+                                    <span class="hide-on-mobile"> · Broker: <span style="color:#7A9A7A;">{{ $mqttConfig['broker'] }}:{{ $mqttConfig['port'] }}</span> · Topic: <span style="color:#7A9A7A;">{{ $mqttConfig['topic_status'] ?? 'gdronic/status' }}</span></span>
+                                @else
+                                    <span class="hide-on-mobile"> · Kontrol via REST API</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="GET" action="{{ route('admin.monitor.akuator.index') }}" style="display:flex;align-items:center;gap:8px;margin:0;flex-wrap:wrap;">
+                        @if(request()->filled('aktuator'))
+                            <input type="hidden" name="aktuator" value="{{ request('aktuator') }}">
+                        @endif
+                        @if(request()->filled('status'))
+                            <input type="hidden" name="status" value="{{ request('status') }}">
+                        @endif
+                        @if(request()->filled('sumber'))
+                            <input type="hidden" name="sumber" value="{{ request('sumber') }}">
+                        @endif
+                        <label for="mode-connection-select" style="font-size:11px;color:#7A9A7A;font-weight:600;">Mode Koneksi:</label>
+                        <select id="mode-connection-select" name="mode" style="background:#181C18;border:1px solid #1E2C1E;color:#E8F0E8;border-radius:8px;padding:7px 12px;font-size:12px;outline:none;cursor:pointer;font-family:'Inter',sans-serif;">
+                            <option value="mqtt" {{ $connectionMode === 'mqtt' ? 'selected' : '' }}>MQTT (rancangan baru)</option>
+                            <option value="http" {{ $connectionMode === 'http' ? 'selected' : '' }}>HTTP (yang sekarang)</option>
+                        </select>
+                        <button type="submit" style="background:#16C47F;color:#0D1A0D;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;">
+                            Proses
+                        </button>
+                    </form>
+                </div>
+
                 <div class="aktuator-grid"
                     style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:28px;">
 
@@ -300,16 +354,18 @@
                                     </div>
                                 </div>
 
-                                {{-- Durasi nyala (detik) stepper + Toggle Switch --}}
+                                {{-- Durasi nyala (detik) stepper (hanya untuk mode HTTP) + Toggle Switch --}}
                                 <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                                    <div class="durasi-stepper" title="Durasi nyala (detik)">
-                                        <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, -1)">−</span>
-                                        <input type="number" class="durasi-input" data-aktuator="{{ $aktuator->id }}"
-                                            value="3" min="1" max="3600" step="1" inputmode="numeric"
-                                            aria-label="Durasi nyala (detik)">
-                                        <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, 1)">+</span>
-                                        <span style="font-size:9px;color:#4D5E4D;">dtk</span>
-                                    </div>
+                                    @if ($connectionMode !== 'mqtt')
+                                        <div class="durasi-stepper" title="Durasi nyala (detik)">
+                                            <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, -1)">−</span>
+                                            <input type="number" class="durasi-input" data-aktuator="{{ $aktuator->id }}"
+                                                value="3" min="1" max="3600" step="1" inputmode="numeric"
+                                                aria-label="Durasi nyala (detik)">
+                                            <span class="durasi-btn" onclick="changeDurasi({{ $aktuator->id }}, 1)">+</span>
+                                            <span style="font-size:9px;color:#4D5E4D;">dtk</span>
+                                        </div>
+                                    @endif
                                     <label class="toggle-wrap">
                                         <input type="checkbox" class="actuator-toggle-input"
                                             data-aktuator="{{ $aktuator->id }}" {{ $isOn ? 'checked' : '' }}
@@ -709,7 +765,309 @@
 @endsection
 
 @section('scripts')
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script>
+        // ════════════════════════════════════════════════════════════════
+        //  KONFIGURASI MQTT & MODE KONEKSI
+        // ════════════════════════════════════════════════════════════════
+        const CONNECTION_MODE = @json($connectionMode);
+        const MQTT_BROKER = @json($mqttConfig['broker']);
+        const MQTT_PORT = Number(@json($mqttConfig['port']));
+        const MQTT_USERNAME = @json($mqttConfig['username']);
+        const MQTT_PASSWORD = @json($mqttConfig['password']);
+        const MQTT_TOPIC_STATUS = @json($mqttConfig['topic_status'] ?? 'gdronic/status');
+
+        let mqttClient = null;
+
+        // ════════════════════════════════════════════════════════════════
+        //  DATA AKTUATOR (harus di atas sebelum fungsi-fungsi lain)
+        // ════════════════════════════════════════════════════════════════
+        const aktuatorsData = @json($aktuatorsJs);
+        const aWarnaMap     = @json($warnaJs);
+        const aGrafikData   = @json($grafik);
+        const aMiniCharts   = {}; // amc-{id}
+        const aMainCharts   = {}; // amg-{id}
+
+        // Set untuk melacak aktuator yang sudah menerima status dari MQTT retained
+        const mqttStatusReceived = new Set();
+
+        // ── Update counter stat AKTIF / NONAKTIF berdasarkan toggle saat ini ──────
+        function updateStatCounters() {
+            let aktif = 0;
+            let nonaktif = 0;
+            aktuatorsData.forEach(akt => {
+                const cb = document.querySelector(`.actuator-toggle-input[data-aktuator="${akt.id}"]`);
+                if (cb) {
+                    if (cb.checked) aktif++;
+                    else nonaktif++;
+                }
+            });
+            const elA = document.getElementById('astat-aktif');
+            const elN = document.getElementById('astat-nonaktif');
+            if (elA) elA.textContent = aktif;
+            if (elN) elN.textContent = nonaktif;
+        }
+
+        function updateMqttStatusUI(status) {
+            const el = document.getElementById('mqtt-connection-status');
+            if (!el || CONNECTION_MODE !== 'mqtt') return;
+            if (status === 'connected') {
+                el.style.background = '#16C47F1A';
+                el.style.color = '#16C47F';
+                el.style.border = '1px solid #16C47F44';
+                el.textContent = 'MQTT Terhubung';
+            } else if (status === 'reconnecting') {
+                el.style.background = '#F0A84A1A';
+                el.style.color = '#F0A84A';
+                el.style.border = '1px solid #F0A84A44';
+                el.textContent = 'Menghubungkan MQTT...';
+            } else if (status === 'error' || status === 'disconnected') {
+                el.style.background = '#F04A4A1A';
+                el.style.color = '#F04A4A';
+                el.style.border = '1px solid #F04A4A44';
+                el.textContent = 'MQTT Terputus';
+            }
+        }
+
+        // Helper untuk mencocokkan string/key ke salah satu aktuator di aktuatorsData
+        function matchAktuator(key) {
+            if (!key) return null;
+            const strKey = String(key).trim();
+            const cleanKey = strKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            return aktuatorsData.find(akt => {
+                if (String(akt.id) === strKey) return true;
+                if (akt.mqtt_key && akt.mqtt_key.toLowerCase() === strKey.toLowerCase()) return true;
+                if (akt.nama && akt.nama.toLowerCase() === strKey.toLowerCase()) return true;
+                if (akt.tipe && akt.tipe.toLowerCase() === strKey.toLowerCase()) return true;
+
+                const cleanMqtt = (akt.mqtt_key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const cleanNama = (akt.nama || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const cleanTipe = (akt.tipe || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (cleanMqtt && cleanKey === cleanMqtt) return true;
+                if (cleanNama && cleanKey === cleanNama) return true;
+                if (cleanTipe && cleanKey === cleanTipe) return true;
+
+                // Fallback pencocokan fuzzy contains
+                if (cleanMqtt && (cleanKey.includes(cleanMqtt) || cleanMqtt.includes(cleanKey))) return true;
+                if (cleanNama && (cleanKey.includes(cleanNama) || cleanNama.includes(cleanKey))) return true;
+
+                // Semantic keyword matching
+                if ((cleanKey.includes('pompa') || cleanKey.includes('ssr')) && (cleanMqtt.includes('pompa') || cleanNama.includes('ssr'))) return true;
+                if (cleanKey.includes('phdown') && cleanMqtt.includes('ph_down')) return true;
+                if (cleanKey.includes('phup') && cleanMqtt.includes('ph_up')) return true;
+
+                return false;
+            });
+        }
+
+        // Helper untuk mengekstrak status ON/OFF boolean dari berbagai format nilai
+        function parseStatusValue(val) {
+            if (typeof val === 'boolean') return val;
+            if (typeof val === 'number') return val > 0;
+            if (typeof val === 'string') {
+                const s = val.trim().toLowerCase();
+                return s === 'on' || s === '1' || s === 'true' || s === 'aktif' || s === 'high';
+            }
+            if (typeof val === 'object' && val !== null) {
+                if ('status' in val) return parseStatusValue(val.status);
+                if ('is_on' in val) return parseStatusValue(val.is_on);
+                if ('state' in val) return parseStatusValue(val.state);
+                if ('val' in val) return parseStatusValue(val.val);
+                if ('nilai' in val) return parseStatusValue(val.nilai);
+            }
+            return false;
+        }
+
+        // Terapkan perubahan status aktuator ke GUI & sinkronkan ke DB jika perlu
+        function applyAktuatorUpdate(akt, isOn, isRetained, sourceInfo) {
+            const id = String(akt.id);
+            const statusStr = isOn ? 'on' : 'off';
+
+            console.log(`[MQTT] Update "${akt.nama}" (id:${id}) -> ${statusStr.toUpperCase()} [${sourceInfo}]`);
+
+            // Update UI toggle switch & status card
+            applyAktuatorState(id, {
+                is_on: isOn,
+                updated_at: 'real-time (MQTT ' + (isRetained ? 'retained' : '') + ')'
+            });
+
+            // Sinkronkan ke database jika status berbeda dari database
+            if (akt.current_db_status !== statusStr) {
+                console.log(`[MQTT -> DB] "${akt.nama}": ${akt.current_db_status} -> ${statusStr}`);
+                akt.current_db_status = statusStr;
+                syncStateToDatabase(id, statusStr, 'Mengikuti update MQTT topic ' + sourceInfo + ' (' + statusStr.toUpperCase() + ')');
+            }
+        }
+
+        // Connect MQTT via WebSocket Secure (WSS)
+        function connectMQTT() {
+            if (typeof mqtt === 'undefined') {
+                console.error('[MQTT] Library mqtt.js belum termuat dari CDN.');
+                updateMqttStatusUI('error');
+                return;
+            }
+
+            const url = `wss://${MQTT_BROKER}:${MQTT_PORT}`;
+            console.log('[MQTT] Menghubungkan ke', url);
+
+            mqttClient = mqtt.connect(url, {
+                username: MQTT_USERNAME,
+                password: MQTT_PASSWORD,
+                clientId: 'hydro_web_' + Math.random().toString(16).slice(2, 10),
+                clean: true,
+                reconnectPeriod: 5000
+            });
+
+            mqttClient.on('connect', () => {
+                console.log('[MQTT] Terhubung ke broker');
+                updateMqttStatusUI('connected');
+
+                // Reset tracker retained
+                mqttStatusReceived.clear();
+
+                // 1. Subscribe topic status utama gdronic/status
+                mqttClient.subscribe(MQTT_TOPIC_STATUS, { qos: 1 }, (err) => {
+                    if (err) console.error('[MQTT] Gagal subscribe ' + MQTT_TOPIC_STATUS + ':', err);
+                    else console.log('[MQTT] Berhasil subscribe topic status:', MQTT_TOPIC_STATUS);
+                });
+
+                // 2. Subscribe wildcard subtopic gdronic/status/#
+                mqttClient.subscribe(MQTT_TOPIC_STATUS + '/#', { qos: 1 }, (err) => {
+                    if (err) console.error('[MQTT] Gagal subscribe ' + MQTT_TOPIC_STATUS + '/#:', err);
+                    else console.log('[MQTT] Berhasil subscribe wildcard:', MQTT_TOPIC_STATUS + '/#');
+                });
+
+                // 3. Subscribe individual actuator status topics jika didefinisikan
+                aktuatorsData.forEach(akt => {
+                    if (akt.topic_status && akt.topic_status !== MQTT_TOPIC_STATUS) {
+                        mqttClient.subscribe(akt.topic_status, { qos: 1 });
+                        console.log('[MQTT] Subscribe per-aktuator:', akt.topic_status);
+                    }
+                });
+
+                // 4. Timeout 4 detik: aktuator yang tidak ada retained message → anggap OFF,
+                //    lalu publish "OFF" dengan retain:true ke topic statusnya
+                setTimeout(() => {
+                    aktuatorsData.forEach(akt => {
+                        const id = String(akt.id);
+                        if (!mqttStatusReceived.has(id)) {
+                            console.warn('[MQTT] Tidak ada retained status untuk "' + akt.nama + '" → set OFF & publish retained OFF');
+                            // Apply UI OFF
+                            applyAktuatorState(id, {
+                                is_on: false,
+                                updated_at: 'real-time (MQTT – tidak ada data)',
+                            });
+                            // Publish OFF retained ke broker agar semua client tahu
+                            if (akt.topic_status && mqttClient && mqttClient.connected) {
+                                mqttClient.publish(akt.topic_status, 'OFF', { qos: 1, retain: true });
+                            }
+                        }
+                    });
+                    updateStatCounters();
+                }, 4000);
+            });
+
+            mqttClient.on('error', (err) => {
+                console.error('[MQTT] Error:', err.message);
+                updateMqttStatusUI('error');
+            });
+
+            mqttClient.on('close', () => {
+                console.log('[MQTT] Koneksi terputus');
+                updateMqttStatusUI('disconnected');
+            });
+
+            mqttClient.on('reconnect', () => {
+                console.log('[MQTT] Menghubungkan ulang...');
+                updateMqttStatusUI('reconnecting');
+            });
+
+            // packet.retain = true berarti ini adalah pesan yang tersimpan di broker (retained)
+            mqttClient.on('message', (topic, payload, packet) => {
+                const message = payload.toString().trim();
+                const isRetained = !!(packet && packet.retain);
+                console.log('[MQTT] Pesan masuk' + (isRetained ? ' [RETAINED]' : '') + ':', topic, '->', message);
+
+                // Cocokkan topic status ke aktuator
+                const akt = aktuatorsData.find(a =>
+                    a.topic_status === topic ||
+                    (a.mqtt_key && topic === 'gdronic/status/' + a.mqtt_key) ||
+                    (a.nama && topic === 'gdronic/status/' + encodeURIComponent(a.nama))
+                ) || matchAktuator(topic.replace('gdronic/status/', '').replace(/^.*\//, ''));
+
+                if (akt) {
+                    const upper = message.toUpperCase();
+                    const isOn = (upper === 'ON' || upper === '1' || upper === 'TRUE' || upper === 'AKTIF' || upper === 'HIGH');
+                    // Tandai sudah menerima status dari broker
+                    mqttStatusReceived.add(String(akt.id));
+                    applyAktuatorUpdate(akt, isOn, isRetained, topic);
+                    updateStatCounters();
+                    return;
+                }
+
+                // Jika pesan raw dikirim ke 'gdronic/status' dengan format key:value atau key=value
+                if (topic === 'gdronic/status' || topic === MQTT_TOPIC_STATUS) {
+                    if (message.includes(':') || message.includes('=')) {
+                        const delim = message.includes(':') ? ':' : '=';
+                        const parts = message.split(delim);
+                        const matched = matchAktuator(parts[0].trim());
+                        if (matched) {
+                            const valUpper = parts[1].trim().toUpperCase();
+                            const valIsOn = (valUpper === 'ON' || valUpper === '1' || valUpper === 'TRUE');
+                            mqttStatusReceived.add(String(matched.id));
+                            applyAktuatorUpdate(matched, valIsOn, isRetained, topic);
+                            updateStatCounters();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Publish MQTT message dengan opsi (misal retain: true)
+        function mqttPublish(topic, payload, options = {}) {
+            return new Promise((resolve, reject) => {
+                if (!mqttClient || !mqttClient.connected) {
+                    reject(new Error('MQTT tidak terhubung ke broker'));
+                    return;
+                }
+
+                const message = String(payload);
+                const pubOpts = Object.assign({ qos: 1 }, options);
+
+                mqttClient.publish(topic, message, pubOpts, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        console.log('[MQTT] Terkirim:', topic, message, pubOpts);
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Sinkronisasi status aktuator ke backend/database
+        async function syncStateToDatabase(id, status, catatan) {
+            try {
+                await fetch(`/admin/aktuator-komponen/${id}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: status,
+                        catatan: catatan || 'Sinkronisasi status MQTT',
+                        sumber_perintah: status === 'on' ? 'manual' : 'otomatis'
+                    })
+                });
+            } catch (e) {
+                console.warn('[MQTT] Gagal sync log ke DB:', e);
+            }
+        }
+
         // ════════════════════════════════════════════════════════════════
         //  SIDEBAR TOGGLE (mobile)
         // ════════════════════════════════════════════════════════════════
@@ -737,11 +1095,6 @@
         syncLastUpdateBadge();
         window.addEventListener('resize', syncLastUpdateBadge);
 
-        const aktuatorsData = @json($aktuatorsJs);
-        const aWarnaMap = @json($warnaJs);
-        const aMiniCharts = {}; // amc-{id}
-        const aMainCharts = {}; // amg-{id}
-        const aGrafikData = @json($grafik);
 
         // ── Mini Charts (riwayat ON/OFF sebagai step line) ──────────────────────
         aktuatorsData.forEach(akt => {
@@ -1003,9 +1356,66 @@
             const id = String(aktuatorId);
             const isOn = status === 'on';
             const card = document.getElementById('actuator-card-' + id);
+            const akt = aktuatorsData.find(a => String(a.id) === id);
+
+            // ══════════════════════════════════════════════════════════════
+            // MODE MQTT: Langsung toggle ON/OFF, tanpa perdetik & tanpa nunggu respon IoT
+            // Cukup publish raw "on"/"off" ke topic command aktuator
+            // ══════════════════════════════════════════════════════════════
+            if (CONNECTION_MODE === 'mqtt') {
+                // 1. Langsung set visual ON/OFF di UI seketika tanpa kunci switch
+                applyAktuatorState(id, {
+                    is_on: isOn,
+                    updated_at: 'real-time (MQTT)',
+                });
+
+                try {
+                    if (!akt || !akt.topic_cmd) {
+                        throw new Error('Topic command MQTT tidak ditemukan untuk aktuator ini.');
+                    }
+
+                    // 2. Publish raw "on" atau "off" ke topic command MQTT
+                    await mqttPublish(akt.topic_cmd, isOn ? 'on' : 'off');
+
+                    akt.current_db_status = status;
+
+                    // 3. Publish raw string "ON" atau "OFF" ke topic status aktuator dengan retain: true
+                    if (akt.topic_status) {
+                        await mqttPublish(akt.topic_status, isOn ? 'ON' : 'OFF', { retain: true });
+                    }
+
+                    // 4. Catat status baru ke database tabel aktuator_logs secara asynchronous
+                    fetch(`/admin/aktuator-komponen/${aktuatorId}/toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            status,
+                            catatan: catatan || 'Kontrol manual via MQTT (' + status.toUpperCase() + ')',
+                            sumber_perintah: 'manual',
+                        })
+                    }).catch(e => console.warn('[MQTT] Gagal simpan log ke database:', e));
+
+                } catch (err) {
+                    console.warn('[MQTT toggle] gagal:', err);
+                    if (checkboxEl) checkboxEl.checked = !isOn;
+                    applyAktuatorState(id, {
+                        is_on: !isOn,
+                        updated_at: 'gagal terkirim',
+                    });
+                    alert('[MQTT] Gagal mengirim perintah ke broker: ' + err.message);
+                }
+                return;
+            }
+
+            // ══════════════════════════════════════════════════════════════
+            // MODE HTTP: Alur sebelumnya dengan durasi stepper & tunggu respon IoT
+            // ══════════════════════════════════════════════════════════════
             const durasi = isOn ? getDurasi(aktuatorId) : null;
 
-            // ── 1. OPTIMISTIC UPDATE: langsung render perubahan di UI ──────────
             pendingAktuator.add(id);
             if (card) card.classList.add('pending');
 
@@ -1019,7 +1429,6 @@
                 skipChart: true
             });
 
-            // ── Alur ON: kunci switch + loading tunggu respon sistem IoT ──────
             if (isOn) {
                 disableActuatorSwitch(id);
                 showActuatorFeedback(id, 'loading', 'Menunggu respon sistem IoT...');
@@ -1048,7 +1457,7 @@
                 if (!res.ok) throw new Error('Gagal mengubah status aktuator');
                 const data = await res.json();
 
-                // ── 2. SINKRONKAN ke state asli dari server (sumber kebenaran) ──
+                // ── SINKRONKAN ke state asli dari server ──
                 applyAktuatorState(id, {
                     is_on: data.log.is_on,
                     nilai_pwm: data.log.nilai_pwm,
@@ -1068,9 +1477,9 @@
                     skipCheckbox: true
                 });
                 if (isOn) {
-                    abortIotWait(id, 'Gagal mengubah status aktuator. Coba lagi.');
+                    abortIotWait(id, 'Gagal mengubah status aktuator: ' + err.message);
                 } else {
-                    alert('Gagal mengubah status aktuator. Coba lagi.');
+                    alert('Gagal mengubah status aktuator: ' + err.message);
                 }
             } finally {
                 pendingAktuator.delete(id);
@@ -1205,6 +1614,12 @@
                             el.textContent = (durasiDetikHariIni / 60).toFixed(1);
                         });
 
+                    // PENTING: Di mode MQTT, jangan pernah mengubah toggle switch aktuator dari database polling!
+                    // Toggle switch sepenuhnya dikendalikan oleh MQTT WebSocket real-time.
+                    if (CONNECTION_MODE === 'mqtt') {
+                        return;
+                    }
+
                     applyAktuatorState(id, {
                         is_on: log.is_on,
                         nilai_pwm: log.nilai_pwm,
@@ -1225,7 +1640,30 @@
             }
         }
 
+        // Jalankan koneksi MQTT jika mode koneksi adalah MQTT
+        if (CONNECTION_MODE === 'mqtt') {
+            // ── Pra-inisialisasi: reset semua toggle ke OFF sebelum MQTT connected ──
+            // Ini mencegah status lama dari DB ditampilkan sementara menunggu retained message dari broker.
+            aktuatorsData.forEach(akt => {
+                const id = String(akt.id);
+                applyAktuatorState(id, {
+                    is_on: false,
+                    updated_at: 'Menghubungkan ke MQTT...',
+                });
+            });
+            updateStatCounters();
+
+            connectMQTT();
+        }
+
         pollAktuator();
         setInterval(pollAktuator, AKTUATOR_POLL_MS);
+
+        // Disconnect MQTT saat meninggalkan halaman
+        window.addEventListener('beforeunload', () => {
+            if (mqttClient) {
+                mqttClient.end(true);
+            }
+        });
     </script>
 @endsection

@@ -202,11 +202,46 @@ class MonitorController extends Controller
 
         $logs = $query->paginate(10)->withQueryString();
 
-        $aktuatorsJs = $aktuators->map(fn($a) => [
-            'id'   => $a->id,
-            'tipe' => strtolower($a->tipe_komponen ?? ''),
-            'nama' => $a->nama_komponen,
-        ])->values();
+        $connectionMode = $request->query('mode', 'mqtt');
+        if (!in_array($connectionMode, ['mqtt', 'http'])) {
+            $connectionMode = 'mqtt';
+        }
+
+        $mqttConfig = config('services.mqtt', [
+            'broker'       => env('MQTT_BROKER', 'mqtt.christoperbale.com'),
+            'port'         => (int) env('MQTT_PORT', 9001),
+            'username'     => env('MQTT_USERNAME', 'parkify'),
+            'password'     => env('MQTT_PASSWORD', 'parkify09'),
+            'topic_status' => env('MQTT_TOPIC_STATUS', 'gdronic/status'),
+        ]);
+        $mqttConfig['topic_status'] = env('MQTT_TOPIC_STATUS', 'gdronic/status');
+
+        $aktuatorsJs = $aktuators->map(function ($a) use ($latestLogs) {
+            $tipeLower = strtolower($a->tipe_komponen ?? '');
+            $namaLower = strtolower($a->nama_komponen ?? '');
+            $combined = $tipeLower . ' ' . $namaLower;
+
+            $mqttKey = match (true) {
+                str_contains($combined, 'ph down') || str_contains($combined, 'ph_down') => 'ph_down',
+                str_contains($combined, 'ph up') || str_contains($combined, 'ph_up') => 'ph_up',
+                str_contains($combined, 'pompa') || str_contains($combined, 'ssr') => 'pompa_utama',
+                default => 'pompa_utama',
+            };
+
+            $log = $latestLogs[$a->id] ?? null;
+            $currentStatus = ($log && $log->status === \App\Models\AktuatorLog::STATUS_ON) ? 'on' : 'off';
+
+            return [
+                'id'                  => $a->id,
+                'tipe'                => $tipeLower,
+                'nama'                => $a->nama_komponen,
+                'mqtt_key'            => $mqttKey,
+                'topic_cmd'           => "gdronic/aktuator/{$mqttKey}",
+                'topic_status'        => "gdronic/status/{$mqttKey}",
+                'topic_global_status' => "gdronic/status",
+                'current_db_status'   => $currentStatus,
+            ];
+        })->values();
 
         $warnaJs = $aktuators->mapWithKeys(fn($a) => [
             $a->id => match(true) {
@@ -230,6 +265,8 @@ class MonitorController extends Controller
             'logs',
             'aktuatorsJs',
             'warnaJs',
+            'connectionMode',
+            'mqttConfig',
         ));
     }
 
@@ -278,10 +315,11 @@ class MonitorController extends Controller
     public function toggleAkuator(Request $request, Komponen $komponen)
     {
         $request->validate([
-            'status'       => 'required|in:on,off',
-            'durasi_detik' => 'nullable|integer|min:1|max:3600',
-            'nilai_pwm'    => 'nullable|integer|min:0|max:255',
-            'catatan'      => 'nullable|string|max:255',
+            'status'          => 'required|in:on,off',
+            'durasi_detik'    => 'nullable|integer|min:1|max:3600',
+            'nilai_pwm'       => 'nullable|integer|min:0|max:255',
+            'catatan'         => 'nullable|string|max:255',
+            'sumber_perintah' => 'nullable|string|in:manual,otomatis,ai,threshold',
         ]);
 
         if ($komponen->jenis_komponen !== Komponen::JENIS_AKTUATOR) {
@@ -314,7 +352,7 @@ class MonitorController extends Controller
                 'status'          => $request->status,
                 'durasi_detik'    => $durasi,
                 'nilai_pwm'       => $request->nilai_pwm,
-                'sumber_perintah' => AktuatorLog::SUMBER_MANUAL,
+                'sumber_perintah' => $request->sumber_perintah ?? AktuatorLog::SUMBER_MANUAL,
                 'catatan'         => $request->catatan ?? 'Diubah manual via panel admin',
             ]);
         });

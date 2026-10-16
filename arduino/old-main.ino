@@ -1,7 +1,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <WiFiManager.h>
+
 #include <NewPing.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
@@ -9,12 +9,24 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
+#include <WebServer.h>
 
-const char* ssid = "z";
-const char* password = "00000000";
-String url = "https://gdronic.cibunarhiap.id/api/batch-log/store";
+struct ConfigData {
+  uint32_t magic;
+  char ssid[32];
+  char password[64];
+  char url[256];
+  char urlAkt[256];
+};
+#define EEPROM_SIZE sizeof(ConfigData)
+#define MAGIC_NUMBER 0xABCD1235
+#define LONG_PRESS_MS 3000
+
+ConfigData config;
+String url;
 unsigned long lastSend = 0;
-const long intervalSend = 3000;
+const long intervalSend = 5000;
 // =======================
 // LCD I2C 20x4
 // =======================
@@ -24,7 +36,7 @@ const long intervalText = 3000;
 unsigned long lastLCD = 0;
 const long intervalLCD = 500;
 byte textIndex = 0;
-
+  
 String statusText[] = {
   "System OK",
   "Gdronic",
@@ -74,19 +86,41 @@ DallasTemperature sensors(&oneWire);
 // =======================
 #define BUTTON_RESET_PIN 35
 unsigned long lastButtonCheck = 0;
-const long intervalButton = 100;
+unsigned long buttonPressStart = 0;
+bool buttonWasPressed = false;
+const long intervalButton = 50;
 
 unsigned long lastAktuator = 0;
-const long intervalAktuator = 2000;
+const long intervalAktuator = 1000;
 bool statusOutput = false;
-String urlAktuator = "https://gdronic.cibunarhiap.id/api/aktuator/status";
+String urlAktuator;
+
+// =======================
+// KONTROL AKTUATOR (nyala berdasarkan durasi)
+// =======================
+struct AktuatorKontrol {
+  const char* nama;
+  uint8_t pin;
+  bool siklusAktif;       // sedang dalam siklus "nyala selama X detik"
+  unsigned long matiPada; // millis() saat harus dimatikan
+};
+
+AktuatorKontrol aktSSR   = {"SSR Pompa Utama", SSR_PIN,   false, 0};
+AktuatorKontrol aktMotor1 = {"Motor pH Down",  MOTOR1_PIN, false, 0};
+AktuatorKontrol aktMotor2 = {"Motor pH Up",    MOTOR2_PIN, false, 0};
 
 // =======================
 // TIMER
 // =======================
+unsigned long lastADC = 0;
+unsigned long lastUltrasonik = 0;
+unsigned long lastSerial = 0;
 unsigned long lastDHT = 0;
 unsigned long lastDS18B20 = 0;
 
+const long intervalADC = 500;
+const long intervalUltrasonik = 1000;
+const long intervalSerial = 2000;
 const long intervalDHT = 2000;
 const long intervalDS = 2000;
 
@@ -101,6 +135,9 @@ float phValue = 0;
 float tdsVoltage = 0;
 float tdsValue = 0;
 float ecValue = 0;
+float jarak = 0;
+float levelAir = 0;
+float phValueFiltered = 7.0;
 
 int16_t phRaw = 0;
 int16_t tdsRaw = 0;
@@ -114,7 +151,7 @@ void connectWiFi() {
   lcd.print("Connecting...");
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(config.ssid, config.password);
 
   Serial.print("Connecting to WiFi");
 
@@ -141,13 +178,114 @@ void connectWiFi() {
     delay(3000);
   } else {
     Serial.println("\nFailed to connect!");
-
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("WiFi Failed");
+    lcd.setCursor(0, 1);
+    lcd.print("Entering AP Mode");
+    delay(2000);
+    enterAPMode();
+  }
+}
 
-    delay(3000);
-    ESP.restart();
+void updateAktuatorKontrol() {
+  AktuatorKontrol* daftar[] = { &aktSSR, &aktMotor1, &aktMotor2 };
+
+  for (int i = 0; i < 3; i++) {
+    AktuatorKontrol& a = *daftar[i];
+
+    if (a.siklusAktif && (long)(millis() - a.matiPada) >= 0) {
+      a.siklusAktif = false;
+      a.matiPada = 0;
+      digitalWrite(a.pin, LOW);
+
+      Serial.print("[AKTUATOR] ");
+      Serial.print(a.nama);
+      Serial.println(" dimatikan (durasi selesai)");
+
+      // Kirim status OFF ke server SETELAH durasi selesai,
+      // supaya lama nyala murni dari timer lokal (tanpa ketergantungan internet).
+      kirimStatusOffAktuator(a.nama);
+    }
+  }
+}
+
+// Kirim status OFF aktuator ke server (endpoint batch-log/store)
+// agar server tahu perangkat sudah menerima perintah.
+bool kirimStatusOffAktuator(const char* namaKomponen) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[AKTUATOR] WiFi disconnected, gagal kirim OFF");
+    return false;
+  }
+
+  HTTPClient http;
+  http.begin(url);
+  http.setTimeout(1000);
+  http.addHeader("Content-Type", "application/json");
+
+  JsonDocument doc;
+  doc["aktuator"]["data"][namaKomponen] = "off";
+
+  String body;
+  serializeJson(doc, body);
+
+  int httpCode = http.POST(body);
+  http.end();
+
+  bool ok = (httpCode >= 200 && httpCode < 300);
+
+  Serial.print("[AKTUATOR] POST OFF -> ");
+  Serial.print(namaKomponen);
+  Serial.print(" | HTTP ");
+  Serial.println(httpCode);
+
+  return ok;
+}
+
+void nyalakanSelama(AktuatorKontrol& a, unsigned long durasiMs) {
+  a.siklusAktif = true;
+  a.matiPada = millis() + durasiMs;
+  digitalWrite(a.pin, HIGH);
+
+  Serial.print("[AKTUATOR] ");
+  Serial.print(a.nama);
+  Serial.print(" NYALA selama ");
+  Serial.print(durasiMs / 1000);
+  Serial.println(" detik");
+}
+
+// Proses 1 aktuator:
+// - status "on"  -> nyalakan langsung selama durasi (timer lokal murni).
+// - status "off" -> matikan (kecuali masih dalam siklus nyala yang dijadwalkan).
+// POST status OFF ke server dilakukan di updateAktuatorKontrol() saat durasi habis.
+void prosesStatusAktuator(AktuatorKontrol& a, const String& status, long durasiDetik) {
+  if (durasiDetik < 0) durasiDetik = 0;
+
+  Serial.print("[AKTUATOR] ");
+  Serial.print(a.nama);
+  Serial.print(" | status: ");
+  Serial.print(status);
+  Serial.print(" | durasi_detik(dari API): ");
+  Serial.println(durasiDetik);
+
+  if (status.equalsIgnoreCase("on")) {
+    if (a.siklusAktif) {
+      return; // masih dalam siklus nyala — abaikan polling berulang
+    }
+
+    if (durasiDetik > 0) {
+      nyalakanSelama(a, (unsigned long)durasiDetik * 1000UL);
+    } else {
+      a.siklusAktif = false;
+      digitalWrite(a.pin, HIGH);
+      Serial.print("[AKTUATOR] ");
+      Serial.print(a.nama);
+      Serial.println(" NYALA (tanpa durasi)");
+    }
+  } else {
+    if (!a.siklusAktif) {
+      digitalWrite(a.pin, LOW);
+    }
   }
 }
 
@@ -159,6 +297,7 @@ void bacaAktuator() {
 
   HTTPClient http;
   http.begin(urlAktuator);
+  http.setTimeout(1000);
 
   int httpCode = http.GET();
 
@@ -175,30 +314,27 @@ void bacaAktuator() {
     if (!error) {
       String ssr =
         doc["aktuator"]["data"]["SSR Pompa Utama"] | "off";
+      long ssrDur =
+        doc["aktuator"]["durasi_detik"]["SSR Pompa Utama"] | 0L;
 
       String phDown =
         doc["aktuator"]["data"]["Motor pH Down"] | "off";
+      long phDownDur =
+        doc["aktuator"]["durasi_detik"]["Motor pH Down"] | 0L;
 
       String phUp =
         doc["aktuator"]["data"]["Motor pH Up"] | "off";
+      long phUpDur =
+        doc["aktuator"]["durasi_detik"]["Motor pH Up"] | 0L;
 
-      // SSR Pompa Utama
-      digitalWrite(
-        SSR_PIN,
-        ssr.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      // SSR Pompa Utama — on + durasi -> kirim OFF dulu, baru nyala
+      prosesStatusAktuator(aktSSR, ssr, ssrDur);
 
       // Motor pH Down
-      digitalWrite(
-        MOTOR1_PIN,
-        phDown.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      prosesStatusAktuator(aktMotor1, phDown, phDownDur);
 
       // Motor pH Up
-      digitalWrite(
-        MOTOR2_PIN,
-        phUp.equalsIgnoreCase("on") ? HIGH : LOW
-      );
+      prosesStatusAktuator(aktMotor2, phUp, phUpDur);
 
       Serial.print("SSR       : ");
       Serial.println(ssr);
@@ -234,8 +370,8 @@ void kirimDataAPI(float suhuAir,
   }
 
   HTTPClient http;
-
   http.begin(url);
+  http.setTimeout(1000);
 
   http.addHeader("Content-Type", "application/json");
 
@@ -257,8 +393,8 @@ void kirimDataAPI(float suhuAir,
   JsonObject dht = sensorData["DHT22 Suhu Udara"].to<JsonObject>();
 
   JsonObject dhtNilai = dht["nilai"].to<JsonObject>();
-  dhtNilai["suhu"] = suhuUdara;
-  dhtNilai["kelembapan"] = kelembaban;
+  dhtNilai["suhu"] = round(suhuUdara * 10.0) / 10.0;
+  dhtNilai["kelembapan"] = round(kelembaban * 10.0) / 10.0;
 
   dht["kualitas_data"] = "normal";
   dht["sudah_diproses"] = true;
@@ -268,7 +404,7 @@ void kirimDataAPI(float suhuAir,
 
   JsonObject hcNilai = hc["nilai"].to<JsonObject>();
   // hcNilai["level"] = 32;
-  hcNilai["level"] = levelAir;
+  hcNilai["level"] = (int)levelAir;
   hcNilai["jarak_cm"] = jarak;
 
   hc["kualitas_data"] = "normal";
@@ -276,7 +412,7 @@ void kirimDataAPI(float suhuAir,
 
   // pH
   JsonObject phObj = sensorData["Probe pH Larutan"].to<JsonObject>();
-  phObj["nilai"] = ph;
+  phObj["nilai"] = round(ph * 10.0) / 10.0;
   phObj["kualitas_data"] = "normal";
   phObj["sudah_diproses"] = true;
 
@@ -286,7 +422,7 @@ void kirimDataAPI(float suhuAir,
   JsonObject tdsNilai = tdsObj["nilai"].to<JsonObject>();
   float ecCalc = tds / 500.0;
   tdsNilai["tds"] = (int)tds;
-  tdsNilai["ec"] = ecCalc;
+  tdsNilai["ec"] = round(ecCalc * 10000.0) / 10000.0;
 
   tdsObj["kualitas_data"] = "normal";
   tdsObj["sudah_diproses"] = true;
@@ -316,6 +452,85 @@ void kirimDataAPI(float suhuAir,
 }
 
 // =======================
+// EEPROM CONFIG
+// =======================
+void saveConfig() {
+  EEPROM.put(0, config);
+  EEPROM.commit();
+}
+
+void loadConfig() {
+  EEPROM.get(0, config);
+  if (config.magic != MAGIC_NUMBER) {
+    config.magic = MAGIC_NUMBER;
+    strlcpy(config.ssid, "z", sizeof(config.ssid));
+    strlcpy(config.password, "00000000", sizeof(config.password));
+    strlcpy(config.url, "https://gdronic.christoperbale.com/api/batch-log/store", sizeof(config.url));
+    strlcpy(config.urlAkt, "https://gdronic.christoperbale.com/api/aktuator/status", sizeof(config.urlAkt));
+    saveConfig();
+  }
+}
+
+WebServer server(80);
+
+void handleRoot() {
+  String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>";
+  html += "<style>body{font-family:sans-serif;padding:20px;max-width:400px;margin:auto}";
+  html += "input{width:100%;padding:8px;margin:8px 0;box-sizing:border-box}";
+  html += "input[type=submit]{background:#4CAF50;color:#fff;border:0;padding:10px;cursor:pointer}</style>";
+  html += "</head><body><h2>Smart Hydroponic Config</h2>";
+  html += "<form action='/save' method='POST'>";
+  html += "SSID:<br><input type='text' name='ssid' value='" + String(config.ssid) + "'><br>";
+  html += "Password:<br><input type='password' name='password' value='" + String(config.password) + "'><br>";
+  html += "URL API:<br><input type='url' name='url' value='" + String(config.url) + "'><br>";
+  html += "URL Aktuator:<br><input type='url' name='urlAkt' value='" + String(config.urlAkt) + "'><br>";
+  html += "<input type='submit' value='Save & Restart'>";
+  html += "</form></body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleSave() {
+  strlcpy(config.ssid, server.arg("ssid").c_str(), sizeof(config.ssid));
+  strlcpy(config.password, server.arg("password").c_str(), sizeof(config.password));
+  strlcpy(config.url, server.arg("url").c_str(), sizeof(config.url));
+  strlcpy(config.urlAkt, server.arg("urlAkt").c_str(), sizeof(config.urlAkt));
+  config.magic = MAGIC_NUMBER;
+  saveConfig();
+
+  String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>";
+  html += "<style>body{font-family:sans-serif;padding:20px;text-align:center}</style>";
+  html += "</head><body><h2>Saved!</h2><p>Restarting...</p></body></html>";
+  server.send(200, "text/html", html);
+  delay(1000);
+  ESP.restart();
+}
+
+void enterAPMode() {
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255,255,255,0));
+  WiFi.softAP("Smart-Hydroponic");
+
+  server.on("/", handleRoot);
+  server.on("/save", HTTP_POST, handleSave);
+  server.begin();
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("AP: Smart-Hydroponic");
+  lcd.setCursor(0, 1);
+  lcd.print("IP: 192.168.4.1");
+
+  Serial.println("===== AP CONFIG MODE =====");
+  Serial.println("SSID: Smart-Hydroponic");
+  Serial.println("IP  : 192.168.4.1");
+
+  while (true) {
+    server.handleClient();
+    delay(10);
+  }
+}
+
+// =======================
 // SETUP
 // =======================
 void setup() {
@@ -326,11 +541,29 @@ void setup() {
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("System Starting...");
-  
+
+  pinMode(BUTTON_RESET_PIN, INPUT);
+
+  // EEPROM
+  EEPROM.begin(EEPROM_SIZE);
+  loadConfig();
+  url = String(config.url);
+  urlAktuator = String(config.urlAkt);
+
+  // Button check at boot → AP config mode
+  if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
+    delay(100);
+    if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
+      lcd.clear();
+      lcd.print("AP Config Mode");
+      delay(1000);
+      enterAPMode();
+    }
+  }
+
   pinMode(SSR_PIN, OUTPUT);
   pinMode(MOTOR1_PIN, OUTPUT);
   pinMode(MOTOR2_PIN, OUTPUT);
-  pinMode(BUTTON_RESET_PIN, INPUT);
 
   // Kondisi awal mati
   digitalWrite(SSR_PIN, LOW);
@@ -358,10 +591,6 @@ void setup() {
   // DS18B20
   sensors.begin();
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Semua Sensor OK");
-  delay(2000);
 }
 
 // =======================
@@ -383,32 +612,48 @@ float bacaJarak() {
 void loop() {
 
   // =======================
-  // ADS1115
+  // AKTUATOR TIMER (matikan yang sudah habis durasinya) — tiap iterasi
+  // =======================
+  updateAktuatorKontrol();
+
+  // =======================
+  // ADS1115 (setiap 500ms)
   // A0 = PH
   // A1 = TDS
   // =======================
-  tdsRaw = ads.readADC_SingleEnded(1);
-  tdsVoltage = ads.computeVolts(tdsRaw);
-  tdsValue = (133.42 * pow(tdsVoltage, 3) - 255.86 * pow(tdsVoltage, 2) + 857.39 * tdsVoltage) * TDS_K_VALUE;
-  ecValue = tdsValue / 500.0;
+  if (millis() - lastADC >= intervalADC) {
+    lastADC = millis();
 
-  phRaw = ads.readADC_SingleEnded(0);
-  phVoltage = ads.computeVolts(phRaw);
-  phValue = 3.5 * phVoltage;
-  if (phValue < 0.0) phValue = 0.0;
-  if (phValue > 14.0) phValue = 14.0;
+    tdsRaw = ads.readADC_SingleEnded(1);
+    tdsVoltage = ads.computeVolts(tdsRaw);
+    tdsValue = (133.42 * pow(tdsVoltage, 3) - 255.86 * pow(tdsVoltage, 2) + 857.39 * tdsVoltage) * TDS_K_VALUE;
+    ecValue = tdsValue / 500.0;
 
-  // =======================
-  // ULTRASONIK
-  // =======================
-  float jarak = bacaJarak();
-  if (jarak < 0) jarak = 0;
-  float levelAir = ((JARAK_KOSONG - jarak) / (JARAK_KOSONG - JARAK_PENUH)) * 100.0;
-  if (levelAir < 0.0) levelAir = 0.0;
-  if (levelAir > 100.0) levelAir = 100.0;
+    phRaw = ads.readADC_SingleEnded(0);
+    phVoltage = ads.computeVolts(phRaw);
+    phValue = 3.5 * phVoltage;
+    if (phValue < 0.0) phValue = 0.0;
+    if (phValue > 9.0) phValue = 9.0;
+
+    // Exponential moving average to dampen noise
+    phValueFiltered += 0.3 * (phValue - phValueFiltered);
+  }
 
   // =======================
-  // DHT22
+  // ULTRASONIK (setiap 1000ms)
+  // =======================
+  if (millis() - lastUltrasonik >= intervalUltrasonik) {
+    lastUltrasonik = millis();
+
+    jarak = bacaJarak();
+    if (jarak < 0) jarak = 0;
+    levelAir = ((JARAK_KOSONG - jarak) / (JARAK_KOSONG - JARAK_PENUH)) * 100.0;
+    if (levelAir < 0.0) levelAir = 0.0;
+    if (levelAir > 100.0) levelAir = 100.0;
+  }
+
+  // =======================
+  // DHT22 (setiap 2000ms)
   // =======================
   if (millis() - lastDHT >= intervalDHT) {
     lastDHT = millis();
@@ -437,6 +682,47 @@ void loop() {
     }
   }
 
+  // =======================
+  // LCD 20x4 (setiap 500ms) - update sebelum kirim API
+  // =======================
+  if (millis() - lastLCD >= intervalLCD) {
+    lastLCD = millis();
+
+    char buf[21];
+
+    // Baris 1 — all 20 chars exactly
+    snprintf(buf, sizeof(buf), "pH: %4.1f   TDS:%4d ", phValueFiltered, (int)tdsValue);
+    lcd.setCursor(0, 0);
+    lcd.print(buf);
+
+    // Baris 2
+    snprintf(buf, sizeof(buf), "TA: %4.1fC   RH:%3d%% ", suhuUdara, (int)kelembaban);
+    lcd.setCursor(0, 1);
+    lcd.print(buf);
+
+    // Baris 3
+    snprintf(buf, sizeof(buf), "TW: %4.1fC   LV:%3.0f%%", suhuAir, levelAir);
+    lcd.setCursor(0, 2);
+    lcd.print(buf);
+
+    // Ganti tulisan bawah setiap 3 detik
+    if (millis() - lastTextChange >= intervalText) {
+      lastTextChange = millis();
+      textIndex++;
+      if (textIndex >= 3) textIndex = 0;
+    }
+
+    // Baris 4 (center) - pad with spaces to clear old chars
+    char buf2[21];
+    int centerPos = (20 - statusText[textIndex].length()) / 2;
+    snprintf(buf2, sizeof(buf2), "%*s%-*s", centerPos, "", 20 - centerPos, statusText[textIndex].c_str());
+    lcd.setCursor(0, 3);
+    lcd.print(buf2);
+  }
+
+  // =======================
+  // KIRIM DATA API (setiap 3000ms)
+  // =======================
   if (millis() - lastSend >= intervalSend) {
     lastSend = millis();
 
@@ -446,7 +732,7 @@ void loop() {
       kelembaban,
       jarak,
       levelAir,
-      phValue,
+      phValueFiltered,
       tdsValue
     );
 
@@ -470,10 +756,26 @@ void loop() {
   // =======================
   if (millis() - lastButtonCheck >= intervalButton) {
     lastButtonCheck = millis();
-    if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
-      delay(50);
-      if (digitalRead(BUTTON_RESET_PIN) == HIGH) {
-        Serial.println("Reset button pressed - restarting...");
+    bool btnState = digitalRead(BUTTON_RESET_PIN) == HIGH;
+
+    if (btnState && !buttonWasPressed) {
+      buttonPressStart = millis();
+      buttonWasPressed = true;
+    }
+
+    if (!btnState && buttonWasPressed) {
+      unsigned long pressDuration = millis() - buttonPressStart;
+      buttonWasPressed = false;
+
+      if (pressDuration >= LONG_PRESS_MS) {
+        Serial.println("Long press - entering AP config mode...");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("AP Config Mode");
+        delay(1000);
+        enterAPMode();
+      } else {
+        Serial.println("Short press - restarting...");
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("Manual Reset...");
@@ -484,99 +786,48 @@ void loop() {
   }
 
   // =======================
-  // SERIAL MONITOR
+  // SERIAL MONITOR (setiap 2000ms)
   // =======================
-  Serial.println("===== DATA SENSOR =====");
+  if (millis() - lastSerial >= intervalSerial) {
+    lastSerial = millis();
 
-  Serial.print("pH Raw      : ");
-  Serial.println(phRaw);
+    Serial.println("===== DATA SENSOR =====");
 
-  Serial.print("pH Voltage  : ");
-  Serial.print(phVoltage, 3);
-  Serial.println(" V");
+    Serial.print("pH Raw      : ");
+    Serial.println(phRaw);
 
-  Serial.print("TDS Raw     : ");
-  Serial.println(tdsRaw);
+    Serial.print("pH Voltage  : ");
+    Serial.print(phVoltage, 3);
+    Serial.println(" V");
 
-  Serial.print("TDS Voltage : ");
-  Serial.print(tdsVoltage, 3);
-  Serial.println(" V");
+    Serial.print("TDS Raw     : ");
+    Serial.println(tdsRaw);
 
-  Serial.print("Jarak       : ");
-  Serial.print(jarak);
-  Serial.println(" cm");
+    Serial.print("TDS Voltage : ");
+    Serial.print(tdsVoltage, 3);
+    Serial.println(" V");
 
-  Serial.print("Suhu Udara  : ");
-  Serial.print(suhuUdara);
-  Serial.println(" C");
+    Serial.print("Jarak       : ");
+    Serial.print(jarak);
+    Serial.println(" cm");
 
-  Serial.print("Kelembaban  : ");
-  Serial.print(kelembaban);
-  Serial.println(" %");
+    Serial.print("Suhu Udara  : ");
+    Serial.print(suhuUdara);
+    Serial.println(" C");
 
-  Serial.print("Suhu Air    : ");
-  Serial.print(suhuAir);
-  Serial.println(" C");
+    Serial.print("Kelembaban  : ");
+    Serial.print(kelembaban);
+    Serial.println(" %");
 
-  Serial.print("Level Air   : ");
-  Serial.print(levelAir, 1);
-  Serial.println(" %");
+    Serial.print("Suhu Air    : ");
+    Serial.print(suhuAir);
+    Serial.println(" C");
 
-  Serial.println("=======================\n");
+    Serial.print("Level Air   : ");
+    Serial.print(levelAir, 1);
+    Serial.println(" %");
 
-  if (millis() - lastLCD >= intervalLCD) {
-    lastLCD = millis();
-    // =======================
-    // LCD 20x4
-    // =======================
-    lcd.clear();
-
-    // Baris 1
-    lcd.setCursor(0, 0);
-    lcd.print("pH : ");
-    lcd.print(phValue, 1);
-
-    lcd.setCursor(11, 0);
-    lcd.print("TDS:");
-    lcd.print((int)tdsValue);
-
-    // Baris 2
-    lcd.setCursor(0, 1);
-    lcd.print("TA : ");
-    lcd.print(suhuUdara, 1);
-    lcd.print(" C");
-
-    lcd.setCursor(11, 1);
-    lcd.print("RH : ");
-    lcd.print((int)kelembaban);
-    lcd.print("%");
-
-    // Baris 3
-    lcd.setCursor(0, 2);
-    lcd.print("TW : ");
-    lcd.print(suhuAir, 1);
-    lcd.print(" C");
-
-    lcd.setCursor(11, 2);
-    lcd.print("LV : ");
-    lcd.print(levelAir, 0);
-    lcd.print("%");
-
-    // Ganti tulisan bawah setiap 3 detik
-    if (millis() - lastTextChange >= intervalText) {
-      lastTextChange = millis();
-      textIndex++;
-
-      if (textIndex >= 3) {
-        textIndex = 0;
-      }
-    }
-
-    // Baris 4 (center)
-    String line4 = statusText[textIndex];
-    int centerPos = (20 - line4.length()) / 2;
-
-    lcd.setCursor(centerPos, 3);
-    lcd.print(line4);
+    Serial.println("=======================\n");
   }
+
 }

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'mqtt' => [
+        'broker'   => env('MQTT_BROKER', 'mqtt.christoperbale.com'),
+        'port'     => (int) env('MQTT_PORT', 9001),
+        'username' => env('MQTT_USERNAME', 'parkify'),
+        'password' => env('MQTT_PASSWORD', 'parkify09'),
+    ],
+
 ];
